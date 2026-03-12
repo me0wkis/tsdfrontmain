@@ -1,0 +1,73 @@
+<div
+  class="flex justify-center items-center min-h-screen bg-gradient-to-br from-[#667eea] to-[#764ba2] p-5"
+>
+  <div class="bg-white rounded-xl shadow-2xl p-10 w-full max-w-[420px]">
+    <h1 class="text-[28px] font-bold text-gray-800 mb-[30px] text-center">
+      Вход в систему
+    </h1>
+
+    <button
+      class="w-full py-3.5 bg-gradient-to-br from-[#667eea] to-[#764ba2] text-white border-none rounded-lg text-base font-semibold cursor-pointer transition-all duration-300 ease-in-out mb-5 hover:enabled:-translate-y-0.5 hover:enabled:shadow-[0_5px_20px_rgba(102,126,234,0.4)] disabled:opacity-60 disabled:cursor-not-allowed"
+      (click)="onAutoLogin()"
+      [disabled]="isLoading"
+    >
+      Автоматический вход
+    </button>
+
+    <div
+      class="flex items-center text-center my-5 text-gray-500 before:content-[''] before:flex-1 before:border-b before:border-gray-300 after:content-[''] after:flex-1 after:border-b after:border-gray-300"
+    >
+      <span class="px-2.5 text-sm">или</span>
+    </div>
+
+    <form (ngSubmit)="onLogin()" class="flex flex-col gap-5">
+      <div class="flex flex-col gap-2">
+        <label for="username" class="text-sm font-semibold text-gray-600"
+          >Логин</label
+        >
+        <input
+          type="text"
+          id="username"
+          name="username"
+          [(ngModel)]="username"
+          [disabled]="isLoading"
+          class="py-3 px-4 border-2 border-gray-300 rounded-lg text-base transition-all duration-300 ease-in-out outline-none focus:border-[#667eea] focus:shadow-[0_0_0_3px_rgba(102,126,234,0.1)] disabled:bg-gray-100 disabled:cursor-not-allowed"
+          placeholder="Введите логин"
+          autocomplete="username"
+        />
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <label for="password" class="text-sm font-semibold text-gray-600"
+          >Пароль</label
+        >
+        <input
+          type="password"
+          id="password"
+          name="password"
+          [(ngModel)]="password"
+          [disabled]="isLoading"
+          class="py-3 px-4 border-2 border-gray-300 rounded-lg text-base transition-all duration-300 ease-in-out outline-none focus:border-[#667eea] focus:shadow-[0_0_0_3px_rgba(102,126,234,0.1)] disabled:bg-gray-100 disabled:cursor-not-allowed"
+          placeholder="Введите пароль"
+          autocomplete="current-password"
+        />
+      </div>
+
+      <div
+        *ngIf="errorMessage"
+        class="p-3 text-sm text-center text-red-700 border border-red-200 rounded-md bg-red-50"
+      >
+        {{ errorMessage }}
+      </div>
+
+      <button
+        type="submit"
+        class="w-full py-3.5 bg-gray-800 text-white border-none rounded-lg text-base font-semibold cursor-pointer transition-all duration-300 ease-in-out hover:enabled:bg-gray-700 hover:enabled:-translate-y-0.5 hover:enabled:shadow-[0_5px_20px_rgba(0,0,0,0.2)] disabled:opacity-60 disabled:cursor-not-allowed"
+        [disabled]="isLoading"
+      >
+        <span *ngIf="!isLoading">Войти</span>
+        <span *ngIf="isLoading">Вход...</span>
+      </button>
+    </form>
+  </div>
+</div>

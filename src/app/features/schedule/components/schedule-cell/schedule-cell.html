@@ -1,0 +1,137 @@
+<div
+  class="schedule-cell border border-white min-h-[40px] min-w-[40px] flex items-center justify-center text-base font-bold relative cursor-pointer transition-all duration-200 select-none"
+  [ngClass]="{
+    'bg-red-100':
+      isWeekend &&
+      !isHoliday &&
+      !isSelected &&
+      !isUserSelected &&
+      !hasPendingShift &&
+      !hasPendingUpdate &&
+      !isMarkedForDeletion,
+    'bg-red-200':
+      isHoliday &&
+      !isSelected &&
+      !isUserSelected &&
+      !hasPendingShift &&
+      !hasPendingUpdate &&
+      !isMarkedForDeletion,
+    'bg-gray-300': hasPendingShift,
+    'bg-blue-300': hasPendingUpdate,
+    'bg-red-400 opacity-60': isMarkedForDeletion,
+    'selected-cell': isSelected,
+    'selected-user-cell': isUserSelected && isEditMode && !isSelected,
+    'cursor-pointer': isEditMode,
+    'hover:opacity-80': isEditMode && !isSelected
+  }"
+  [style.background-color]="
+    hasPendingShift
+      ? null
+      : hasPendingUpdate
+      ? null
+      : isMarkedForDeletion
+      ? null
+      : shiftData.color || null
+  "
+  [pTooltip]="tooltipTemplate"
+  [tooltipDisabled]="
+    isEditMode || (!shiftData.shift && !hasPendingShift && !hasPendingUpdate)
+  "
+  tooltipPosition="top"
+  [showDelay]="200"
+  [hideDelay]="200"
+  (mousedown)="onMouseDown($event)"
+  (mouseenter)="onMouseEnter()"
+  (mouseup)="onMouseUp()"
+  (click)="onCellClick($event)"
+>
+  <!-- Отображаем pending shift (новая смена) -->
+  @if (hasPendingShift) {
+  <span class="text-sm font-bold text-gray-700">
+    {{ pendingShiftCode }}
+  </span>
+  }
+  <!-- Отображаем pending update (обновление смены) -->
+  @else if (hasPendingUpdate) {
+  <span class="text-sm font-bold text-blue-700">
+    {{ pendingUpdateCode }}
+  </span>
+  }
+  <!-- Отображаем смену на удаление (перечеркнутая) -->
+  @else if (isMarkedForDeletion && shiftData.shiftType) {
+  <span class="text-sm font-bold text-white line-through">
+    {{ shiftData.shiftType }}
+  </span>
+  }
+  <!-- Отображаем обычную смену -->
+  @else if (shiftData.shiftType) { @if (isStudentShift && studentWorkTime) {
+  <div
+    class="flex flex-col items-center justify-center text-xs font-bold leading-tight text-white"
+  >
+    <span>{{ shiftData.shiftType }}</span>
+    <span>{{ studentWorkTime }}</span>
+  </div>
+  } @else {
+  <span class="text-sm font-bold text-white">
+    {{ shiftData.shiftType }}
+  </span>
+  } }
+</div>
+
+<!-- Template для tooltip -->
+<ng-template #tooltipTemplate>
+  @if (shiftData.shift) {
+  <div class="max-w-xs p-3 bg-white border rounded-lg">
+    <div class="flex items-center gap-2 mb-2 font-semibold text-gray-800">
+      <i class="text-blue-500 pi pi-clock"></i>
+      Смена {{ shiftData.shift.shortCode }}
+    </div>
+
+    <div class="space-y-1 text-sm text-gray-700">
+      <div class="flex items-center justify-between">
+        <span class="font-medium">Начало:</span>
+        <span class="font-mono text-green-600">{{
+          formatTime(shiftData.shift.startTime)
+        }}</span>
+      </div>
+
+      <div class="flex items-center justify-between">
+        <span class="font-medium">Окончание:</span>
+        <span class="font-mono text-red-600">{{
+          formatTime(shiftData.shift.endTime)
+        }}</span>
+      </div>
+
+      <div class="pt-1 mt-1 border-t">
+        <div class="flex items-center justify-between">
+          <span class="font-medium">Обед:</span>
+          <span class="font-mono text-orange-500">
+            {{ formatTime(shiftData.shift.lunchStartTime) }} -
+            {{ formatTime(shiftData.shift.lunchEndTime) }}
+          </span>
+        </div>
+      </div>
+
+      @if (shiftData.shift.jobTitle) {
+      <div class="pt-1 mt-1 border-t">
+        <div class="flex items-start gap-2">
+          <i class="pi pi-user text-blue-500 text-xs mt-0.5"></i>
+          <span class="text-xs text-gray-600">{{
+            shiftData.shift.jobTitle
+          }}</span>
+        </div>
+      </div>
+      }
+
+      <div class="pt-1 mt-1 border-t">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-medium">Часов:</span>
+          <span class="font-semibold text-blue-600"
+            >{{ shiftData.shift.workHours }}ч</span
+          >
+        </div>
+      </div>
+    </div>
+  </div>
+  }
+</ng-template>

@@ -1,0 +1,22 @@
+.user-name-card {
+  background-color: #f6f6f6;
+  border-left: 4px solid;
+  color: #333;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.user-name-card:hover {
+  background-color: #f0f0f0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Выделенный пользователь */
+.user-name-card.selected-user {
+  background-color: #bfdbfe !important;
+  border-left-color: #1e40af !important;
+  font-weight: 600;
+}
+
+.user-name-card.selected-user:hover {
+  background-color: #93c5fd !important;
+}

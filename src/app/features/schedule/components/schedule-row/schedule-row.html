@@ -1,0 +1,35 @@
+<div class="flex">
+  <!-- Колонка с именем пользователя с цветной границей слева -->
+  <div
+    class="user-name-card flex items-center w-48 px-3 py-2 font-medium select-none"
+    [ngClass]="{
+      'cursor-pointer': isEditMode,
+      'selected-user': isUserSelected && isEditMode,
+      'hover:bg-blue-50': isEditMode && !isUserSelected
+    }"
+    [style.border-left-color]="teamColor"
+    (click)="onUserNameClick($event)"
+  >
+    {{ user.name }}
+  </div>
+
+  <!-- Ячейки для каждого дня месяца -->
+  <div class="flex flex-1">
+    @for (day of days; track day) {
+    <app-schedule-cell
+      [shiftData]="getShiftForDay(day.day)"
+      [isWeekend]="day.isWeekend"
+      [isHoliday]="day.isHoliday || false"
+      [isEditMode]="isEditMode"
+      [userId]="user.id"
+      [year]="year"
+      [month]="month"
+      [day]="day.day"
+      [pendingShifts]="pendingShifts"
+      [shiftsToUpdate]="shiftsToUpdate"
+      [shiftsToDelete]="shiftsToDelete"
+    >
+    </app-schedule-cell>
+    }
+  </div>
+</div>

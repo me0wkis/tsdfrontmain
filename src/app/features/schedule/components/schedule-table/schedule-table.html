@@ -1,0 +1,65 @@
+<div
+  class="overflow-hidden bg-white rounded-lg select-none"
+  [ngClass]="{ 'edit-mode-border': isEditMode }"
+>
+  <app-schedule-header [month]="month" [days]="days" />
+
+  <!-- Индикатор загрузки -->
+  <div
+    *ngIf="loading"
+    class="flex flex-col items-center justify-center py-12 gap-4"
+  >
+    <p-progressSpinner
+      strokeWidth="4"
+      fill="transparent"
+      animationDuration="1s"
+      [style]="{ width: '50px', height: '50px' }"
+    >
+    </p-progressSpinner>
+    <div class="text-gray-600 font-medium">Загрузка расписания...</div>
+  </div>
+
+  <!-- Строки расписания для каждой команды -->
+  <div *ngIf="!loading && scheduleData">
+    <div
+      *ngFor="let team of scheduleData.teams"
+      class="border-b border-gray-200"
+    >
+      <!-- Строки пользователей команды -->
+      <app-schedule-row
+        *ngFor="let user of team.users"
+        [user]="{ id: user.id.toString(), name: user.fullName }"
+        [shifts]="user.shifts"
+        [days]="days"
+        [teamColor]="getTeamColor(team.teamName)"
+        [year]="scheduleData.year"
+        [month]="scheduleData.month"
+        [isEditMode]="isEditMode"
+        [pendingShifts]="pendingShifts"
+        [shiftsToUpdate]="shiftsToUpdate"
+        [shiftsToDelete]="shiftsToDelete"
+      >
+      </app-schedule-row>
+    </div>
+  </div>
+
+  <!-- Сообщение об отсутствии данных -->
+  <div
+    *ngIf="!loading && !scheduleData"
+    class="flex items-center justify-center py-8"
+  >
+    <div class="text-gray-500">Нет данных для отображения</div>
+  </div>
+
+  <!-- Сообщение о пустых данных -->
+  <div
+    *ngIf="
+      !loading &&
+      scheduleData &&
+      (!scheduleData.teams || scheduleData.teams.length === 0)
+    "
+    class="flex items-center justify-center py-8"
+  >
+    <div class="text-gray-500">Расписание загружено, но команды не найдены</div>
+  </div>
+</div>

@@ -1,0 +1,366 @@
+/* Calendar container */
+.calendar-container {
+  height: calc(100vh - 200px); /* Adjust based on header/footer space */
+  width: 100%;
+  overflow: hidden;
+}
+
+/* Make the calendar take full width */
+:host ::ng-deep .fc {
+  width: 100%;
+  height: 100%;
+}
+
+/* Header styling */
+:host ::ng-deep .fc-header-toolbar {
+  padding: 20px 0;
+  margin-bottom: 0 !important;
+}
+
+:host ::ng-deep .fc-toolbar-title {
+  font-size: 1.4rem !important;
+  font-weight: 600 !important;
+}
+
+:host ::ng-deep .fc-button-primary {
+  background-color: #3b82f6 !important; /* Синий цвет */
+  border-color: #3b82f6 !important;
+  box-shadow: none !important;
+  transition: all 0.2s ease;
+}
+
+:host ::ng-deep .fc-button-primary:hover {
+  background-color: #2563eb !important; /* Темно-синий при наведении */
+  border-color: #2563eb !important;
+}
+
+:host ::ng-deep .fc-button-active {
+  background-color: #1d4ed8 !important; /* Более темный синий для активных кнопок */
+  border-color: #1d4ed8 !important;
+}
+
+/* Style for day cells */
+:host ::ng-deep .fc-daygrid-day {
+  transition: background-color 0.2s;
+}
+
+:host ::ng-deep .fc-daygrid-day:hover {
+  background-color: rgba(59, 130, 246, 0.05); /* Светло-синяя подсветка */
+}
+
+/* Style for events */
+:host ::ng-deep .fc-event {
+  cursor: pointer;
+  border: none;
+  padding: 2px 4px;
+  margin-bottom: 2px;
+}
+
+/* Style for current time indicator */
+:host ::ng-deep .fc-timegrid-now-indicator-line {
+  border-color: #f43f5e; /* Rose color for better visibility */
+  border-width: 2px;
+  z-index: 10;
+}
+
+:host ::ng-deep .fc-timegrid-now-indicator-arrow {
+  border-color: #f43f5e;
+  border-width: 5px;
+  z-index: 10;
+}
+
+/* Style for non-business hours */
+:host ::ng-deep .fc-non-business {
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+/* Style for today's date - more neutral gray */
+:host ::ng-deep .fc-day-today {
+  background-color: #f3f4f6 !important; /* Light gray neutral color */
+  border: none !important;
+}
+
+:host ::ng-deep .fc-day-today .fc-daygrid-day-number {
+  font-weight: bold;
+  color: #4b5563;
+}
+
+/* Event time formatting */
+:host ::ng-deep .fc-event-time {
+  font-size: 0.8em;
+  font-weight: 500;
+  opacity: 0.8;
+}
+
+/* Force 24-hour time format */
+:host ::ng-deep .fc-event-time {
+  display: inline-block !important;
+}
+
+:host ::ng-deep .fc-event-time::after {
+  content: none !important;
+}
+
+/* Event title formatting */
+:host ::ng-deep .fc-event-title {
+  font-weight: 500;
+  word-break: break-word;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Custom event classes */
+:host ::ng-deep .custom-event {
+  margin-bottom: 2px;
+  color: #333333 !important; /* Гарантируем темный цвет текста для всех событий */
+}
+
+/* Workout events - pink/red style */
+:host ::ng-deep .workout-event {
+  background-color: #ffebee !important; /* Light pink */
+  color: #333 !important;
+  border-left: 4px solid #f43f5e !important; /* Rose */
+  border-radius: 0 !important; /* Убираем скругление углов */
+}
+
+:host ::ng-deep .workout-event:hover {
+  background-color: #ffdeeb !important; /* Затемненный цвет при наведении */
+  border-left-width: 4px !important; /* Сохраняем ту же ширину границы */
+}
+
+/* Social events - light green style */
+:host ::ng-deep .social-event {
+  background-color: #e8f5e9 !important; /* Light green */
+  color: #333 !important;
+  border-left: 4px solid #4caf50 !important; /* Green */
+  border-radius: 0 !important; /* Убираем скругление углов */
+}
+
+:host ::ng-deep .social-event:hover {
+  background-color: #d8f3df !important; /* Затемненный цвет при наведении */
+  border-left-width: 4px !important; /* Сохраняем ту же ширину границы */
+}
+
+/* Meeting events - light blue style */
+:host ::ng-deep .meeting-event {
+  background-color: #e3f2fd !important; /* Light blue */
+  color: #333 !important;
+  border-left: 4px solid #2196f3 !important; /* Blue */
+  border-radius: 0 !important; /* Убираем скругление углов */
+}
+
+:host ::ng-deep .meeting-event:hover {
+  background-color: #d1e9fc !important; /* Затемненный цвет при наведении */
+  border-left-width: 4px !important; /* Сохраняем ту же ширину границы */
+}
+
+/* Personal events - light amber style */
+:host ::ng-deep .personal-event {
+  background-color: #fff8e1 !important; /* Light amber */
+  color: #333 !important;
+  border-left: 4px solid #ffc107 !important; /* Amber */
+  border-radius: 0 !important; /* Убираем скругление углов */
+}
+
+:host ::ng-deep .personal-event:hover {
+  background-color: #ffecb3 !important; /* Затемненный цвет при наведении */
+  border-left-width: 4px !important; /* Сохраняем ту же ширину границы */
+}
+
+/* All day events style */
+:host ::ng-deep .all-day-event {
+  background-color: #eff6ff !important; /* Светло-синий фон */
+  color: #333 !important;
+  border-left: 4px solid #3b82f6 !important; /* Синий */
+  font-weight: 600;
+  border-radius: 0 !important; /* Убираем скругление углов */
+}
+
+:host ::ng-deep .all-day-event:hover {
+  background-color: #dbeafe !important; /* Более насыщенный светло-синий при наведении */
+  border-left-width: 4px !important; /* Сохраняем ту же ширину границы */
+}
+
+/* Styling for different sized events */
+:host ::ng-deep .fc-daygrid-dot-event {
+  padding: 4px !important;
+}
+
+/* Styling for events that don't fit (+more) */
+:host ::ng-deep .fc-daygrid-more-link {
+  color: #3b82f6; /* Синий */
+  font-weight: 500;
+  background-color: #eff6ff;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-top: 2px;
+  display: inline-block;
+  font-size: 0.8rem;
+  transition: all 0.2s ease;
+}
+
+:host ::ng-deep .fc-daygrid-more-link:hover {
+  background-color: #dbeafe;
+  color: #2563eb;
+}
+
+/* Week numbers styling */
+:host ::ng-deep .fc-daygrid-week-number {
+  background-color: #eff6ff !important; /* Светло-синий фон */
+  color: #3b82f6 !important; /* Синий текст */
+  border-radius: 4px;
+  font-size: 0.8rem;
+  padding: 2px 4px;
+}
+
+/* Time grid styling */
+:host ::ng-deep .fc-timegrid-slot-label {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+/* Force 24-hour format for time slots */
+:host ::ng-deep .fc-timegrid-slot-label-cushion {
+  font-variant-numeric: tabular-nums;
+}
+
+:host ::ng-deep .fc-timegrid-slot-label-cushion:after {
+  content: none !important;
+}
+
+:host ::ng-deep .fc-timegrid-slot {
+  height: 40px !important; /* Taller time slots for better readability */
+}
+
+:host ::ng-deep .fc-timegrid-event {
+  margin: 1px 0;
+}
+
+/* Modal styling */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  transition: opacity 0.3s ease;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+.modal-content {
+  position: relative;
+  z-index: 10;
+  transition: all 0.3s ease;
+  filter: none !important;
+  pointer-events: auto !important;
+  border-top: 4px solid #3b82f6; /* Синяя граница */
+}
+
+/* Animation for modal appearance */
+.fade-in {
+  animation: fadeIn 0.3s ease forwards;
+}
+
+.slide-in {
+  animation: slideIn 0.3s ease forwards;
+}
+
+/* Animation for modal disappearance */
+.fade-out {
+  animation: fadeOut 0.3s ease forwards;
+}
+
+.slide-out {
+  animation: slideOut 0.3s ease forwards;
+}
+
+/* Keyframes for animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOut {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+}
+
+/* Blur effect for modal backdrop */
+:root {
+  --content-blur: 0px;
+  --transition-speed: 0.3s;
+}
+
+body.modal-open .container {
+  filter: blur(3px);
+  transition: filter var(--transition-speed) ease;
+}
+
+body.modal-open .container > * {
+  pointer-events: none;
+}
+
+/* Ensure modal content is not blurred */
+.modal-content {
+  filter: none !important;
+  pointer-events: auto !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .calendar-container {
+    height: 70vh;
+  }
+
+  :host ::ng-deep .fc-toolbar {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  :host ::ng-deep .fc-toolbar-title {
+    font-size: 1.2rem !important;
+  }
+}
+
+/* Ensure text color is correct in all views */
+:host ::ng-deep .fc-timegrid-event .fc-event-title,
+:host ::ng-deep .fc-timegrid-event .fc-event-time,
+:host ::ng-deep .fc-daygrid-event .fc-event-title,
+:host ::ng-deep .fc-daygrid-event .fc-event-time {
+  color: #333 !important;
+}
+
+/* Force text color for specific views */
+:host ::ng-deep .fc-timeGridWeek-view .fc-event,
+:host ::ng-deep .fc-timeGridDay-view .fc-event {
+  color: #333 !important;
+}

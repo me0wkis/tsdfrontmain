@@ -1,0 +1,338 @@
+<app-main>
+  <ng-template #sidebar>
+    <!-- Calendar Sidebar -->
+    <div class="space-y-4">
+      <div class="text-center">
+        <h3 class="text-lg font-bold text-gray-800 mb-2">TSD Calendar</h3>
+        <p class="text-sm text-gray-600">Управление событиями и встречами</p>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="space-y-2">
+        <button
+          class="w-full px-3 py-2 text-sm font-semibold text-blue-700 bg-blue-100 hover:bg-blue-200 rounded-md transition-colors"
+          (click)="
+            openEventModal();
+            currentEvent = createEmptyEvent();
+            modalMode = 'create'
+          "
+        >
+          <i class="pi pi-plus mr-2"></i>
+          Добавить событие
+        </button>
+      </div>
+
+      <!-- Event Type Legend -->
+      <div class="space-y-2">
+        <h4 class="text-sm font-semibold text-gray-700">Типы событий:</h4>
+        <div class="space-y-2 text-xs">
+          <div class="flex items-center">
+            <div
+              class="w-3 h-3 bg-[#ffebee] border-l-4 border-[#f43f5e] mr-2"
+            ></div>
+            <span>Тренировка</span>
+          </div>
+          <div class="flex items-center">
+            <div
+              class="w-3 h-3 bg-[#e8f5e9] border-l-4 border-[#4caf50] mr-2"
+            ></div>
+            <span>Встреча</span>
+          </div>
+          <div class="flex items-center">
+            <div
+              class="w-3 h-3 bg-[#e3f2fd] border-l-4 border-[#2196f3] mr-2"
+            ></div>
+            <span>Рабочая встреча</span>
+          </div>
+          <div class="flex items-center">
+            <div
+              class="w-3 h-3 bg-[#fff8e1] border-l-4 border-[#ffc107] mr-2"
+            ></div>
+            <span>Личное</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Calendar Views -->
+      <div class="space-y-2">
+        <h4 class="text-sm font-semibold text-gray-700">Представления:</h4>
+        <div class="grid grid-cols-1 gap-1 text-xs">
+          <button
+            class="px-2 py-1 text-left text-gray-600 hover:bg-gray-100 rounded transition-colors"
+            (click)="calendarOptions.initialView = 'dayGridMonth'"
+          >
+            Месяц
+          </button>
+          <button
+            class="px-2 py-1 text-left text-gray-600 hover:bg-gray-100 rounded transition-colors"
+            (click)="calendarOptions.initialView = 'timeGridWeek'"
+          >
+            Неделя
+          </button>
+          <button
+            class="px-2 py-1 text-left text-gray-600 hover:bg-gray-100 rounded transition-colors"
+            (click)="calendarOptions.initialView = 'timeGridDay'"
+          >
+            День
+          </button>
+        </div>
+      </div>
+
+      <!-- Help -->
+      <div class="p-3 bg-gray-50 rounded-lg">
+        <h4 class="text-sm font-semibold text-gray-700 mb-2">
+          Как использовать:
+        </h4>
+        <div class="text-xs text-gray-600 space-y-1">
+          <p><strong>Клик по дате</strong> - создать событие</p>
+          <p><strong>Клик по событию</strong> - редактировать</p>
+          <p><strong>Перетаскивание</strong> - изменить время</p>
+          <p><strong>Изменение размера</strong> - изменить длительность</p>
+        </div>
+      </div>
+    </div>
+  </ng-template>
+
+  <!-- Calendar Content -->
+  <div class="flex flex-col h-full">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+      <h1 class="text-2xl font-bold text-gray-800">TSD Calendar</h1>
+    </div>
+
+    <!-- FullCalendar Component -->
+    <div class="flex-1 calendar-container">
+      <full-calendar [options]="calendarOptions"></full-calendar>
+    </div>
+  </div>
+
+  <!-- Event Modal -->
+  <div
+    *ngIf="showEventModal"
+    class="fixed inset-0 z-50 flex items-center justify-center"
+    [ngClass]="{
+      'modal-closing': isClosing,
+      'modal-opening': !isClosing
+    }"
+  >
+    <div
+      class="bg-black bg-opacity-50 modal-backdrop backdrop-blur-sm"
+      [ngClass]="{
+        'fade-out': isClosing,
+        'fade-in': !isClosing
+      }"
+    ></div>
+    <div
+      class="w-full max-w-md p-6 mx-4 bg-white rounded-lg shadow-xl modal-content"
+      (click)="$event.stopPropagation()"
+      [ngClass]="{
+        'slide-out': isClosing,
+        'slide-in': !isClosing
+      }"
+    >
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-xl font-semibold text-gray-800">
+          {{
+            modalMode === "create"
+              ? "Добавить событие"
+              : "Редактировать событие"
+          }}
+        </h3>
+        <button
+          class="text-2xl text-gray-500 transition-colors hover:text-gray-700"
+          (click)="closeEventModal()"
+        >
+          &times;
+        </button>
+      </div>
+
+      <!-- Event Form -->
+      <div class="mb-4">
+        <label class="block mb-1 text-sm font-medium text-gray-700"
+          >Дата начала*</label
+        >
+        <div class="grid grid-cols-2 gap-2">
+          <input
+            type="date"
+            [value]="getDateStringFromISO(currentEvent.start)"
+            (change)="updateEventDate($event, 'start')"
+            class="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+          <input
+            *ngIf="!currentEvent.allDay"
+            type="time"
+            [value]="getTimeStringFromISO(currentEvent.start)"
+            (change)="updateEventTime($event, 'start')"
+            class="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
+      </div>
+
+      <div *ngIf="showEndDate" class="mb-4">
+        <label class="block mb-1 text-sm font-medium text-gray-700"
+          >Дата окончания</label
+        >
+        <div class="grid grid-cols-2 gap-2">
+          <input
+            type="date"
+            [value]="
+              getDateStringFromISO(currentEvent.end || currentEvent.start)
+            "
+            (change)="updateEventDate($event, 'end')"
+            class="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+          <input
+            *ngIf="!currentEvent.allDay"
+            type="time"
+            [value]="
+              getTimeStringFromISO(
+                currentEvent.end || addDefaultDuration(currentEvent.start)
+              )
+            "
+            (change)="updateEventTime($event, 'end')"
+            class="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between mb-4">
+        <label class="flex items-center text-sm font-medium text-gray-700">
+          <input
+            type="checkbox"
+            [(ngModel)]="currentEvent.allDay"
+            class="w-4 h-4 mr-2 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+            (change)="onAllDayChange()"
+          />
+          <span>Весь день</span>
+        </label>
+        <label class="flex items-center text-sm font-medium text-gray-700">
+          <input
+            type="checkbox"
+            [(ngModel)]="showEndDate"
+            class="w-4 h-4 mr-2 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+          />
+          <span>Указать время окончания</span>
+        </label>
+      </div>
+      <div class="mb-4">
+        <label
+          for="event-title"
+          class="block mb-1 text-sm font-medium text-gray-700"
+          >Название*</label
+        >
+        <input
+          id="event-title"
+          type="text"
+          [(ngModel)]="currentEvent.title"
+          class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          placeholder="Введите название события"
+        />
+      </div>
+
+      <div class="mb-4">
+        <label class="block mb-1 text-sm font-medium text-gray-700"
+          >Тип события</label
+        >
+        <div class="flex flex-wrap gap-2">
+          <button
+            type="button"
+            class="flex items-center justify-center px-3 py-1 text-sm transition-colors border rounded-md"
+            [ngClass]="{
+              'bg-[#ffebee] border-[#f43f5e] text-[#9b2c3d]':
+                currentEvent.eventType === 'workout',
+              'bg-white border-gray-300 text-gray-700 hover:bg-gray-50':
+                currentEvent.eventType !== 'workout'
+            }"
+            (click)="setEventType('workout')"
+          >
+            <span>Тренировка</span>
+          </button>
+          <button
+            type="button"
+            class="flex items-center justify-center px-3 py-1 text-sm transition-colors border rounded-md"
+            [ngClass]="{
+              'bg-[#e8f5e9] border-[#4caf50] text-[#2e7d32]':
+                currentEvent.eventType === 'social',
+              'bg-white border-gray-300 text-gray-700 hover:bg-gray-50':
+                currentEvent.eventType !== 'social'
+            }"
+            (click)="setEventType('social')"
+          >
+            <span>Встреча</span>
+          </button>
+          <button
+            type="button"
+            class="flex items-center justify-center px-3 py-1 text-sm transition-colors border rounded-md"
+            [ngClass]="{
+              'bg-[#e3f2fd] border-[#2196f3] text-[#0d47a1]':
+                currentEvent.eventType === 'meeting',
+              'bg-white border-gray-300 text-gray-700 hover:bg-gray-50':
+                currentEvent.eventType !== 'meeting'
+            }"
+            (click)="setEventType('meeting')"
+          >
+            <span>Рабочая встреча</span>
+          </button>
+          <button
+            type="button"
+            class="flex items-center justify-center px-3 py-1 text-sm transition-colors border rounded-md"
+            [ngClass]="{
+              'bg-[#fff8e1] border-[#ffc107] text-[#ff8f00]':
+                currentEvent.eventType === 'personal',
+              'bg-white border-gray-300 text-gray-700 hover:bg-gray-50':
+                currentEvent.eventType !== 'personal'
+            }"
+            (click)="setEventType('personal')"
+          >
+            <span>Личное</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="mb-6">
+        <label
+          for="event-description"
+          class="block mb-1 text-sm font-medium text-gray-700"
+          >Описание</label
+        >
+        <textarea
+          id="event-description"
+          [(ngModel)]="currentEvent.description"
+          class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          rows="3"
+          placeholder="Введите описание события"
+        ></textarea>
+      </div>
+
+      <div class="flex justify-between">
+        <button
+          *ngIf="modalMode === 'edit'"
+          class="px-4 py-2 text-white transition-colors bg-red-500 rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+          (click)="deleteEvent()"
+        >
+          Удалить
+        </button>
+
+        <div class="flex ml-auto space-x-3">
+          <button
+            class="px-4 py-2 text-gray-700 transition-colors bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+            (click)="closeEventModal()"
+          >
+            Отмена
+          </button>
+          <button
+            class="px-4 py-2 text-white transition-colors bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+            (click)="saveEvent()"
+            [disabled]="!currentEvent.title.trim()"
+            [ngClass]="{
+              'bg-indigo-400 cursor-not-allowed': !currentEvent.title.trim(),
+              'bg-indigo-600 hover:bg-indigo-700': currentEvent.title.trim()
+            }"
+          >
+            {{ modalMode === "create" ? "Добавить" : "Сохранить" }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</app-main>

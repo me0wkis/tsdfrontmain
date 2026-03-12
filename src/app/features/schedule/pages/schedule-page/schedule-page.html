@@ -1,0 +1,373 @@
+<p-confirmDialog
+  [style]="{ width: '50vw' }"
+  [breakpoints]="{ '960px': '75vw', '640px': '100vw' }"
+  [baseZIndex]="10000"
+>
+</p-confirmDialog>
+
+<app-main>
+  <ng-template #sidebar>
+    <!-- Month navigation -->
+    <div class="flex items-center justify-between mb-6">
+      <p-button
+        icon="pi pi-chevron-left"
+        (onClick)="prevMonth()"
+        [text]="true"
+        styleClass="p-2 text-gray-600 hover:text-gray-800"
+        aria-label="Previous month"
+      />
+      <span class="text-xl font-bold text-gray-800"
+        >{{ monthName }} {{ year }}</span
+      >
+      <p-button
+        icon="pi pi-chevron-right"
+        (onClick)="nextMonth()"
+        [text]="true"
+        styleClass="p-2 text-gray-600 hover:text-gray-800"
+        aria-label="Next month"
+      />
+    </div>
+
+    <!-- Month grid -->
+    <div *ngIf="!isEditMode" @slideDown class="grid grid-cols-3 gap-2 mb-6">
+      <p-button
+        *ngFor="let monthItem of months; let i = index"
+        [label]="monthItem"
+        (onClick)="selectMonth(i + 1)"
+        [text]="i + 1 !== month"
+        [severity]="i + 1 === month ? 'primary' : undefined"
+        styleClass="w-full px-3 py-2 text-sm font-medium rounded-md"
+      />
+    </div>
+    <p-button
+      *ngIf="!isEditMode"
+      @fadeInOut
+      label="To current month"
+      (onClick)="goToCurrentMonth()"
+      [text]="true"
+      styleClass="w-full px-3 py-2 mb-4 text-sm font-semibold text-blue-700 bg-blue-100 hover:bg-blue-200 rounded-md"
+    />
+
+    <p-button
+      label="Edit Schedule"
+      (onClick)="editSchedule()"
+      [text]="true"
+      styleClass="w-full px-3 py-2 mb-4 text-sm font-semibold text-blue-700 bg-blue-100 hover:bg-blue-200 rounded-md"
+    />
+
+    <!-- Select для типов смен, появляется в режиме редактирования -->
+    <div *ngIf="isEditMode" @fadeInOut class="mb-4">
+      <label
+        for="shiftTypeSelect"
+        class="block mb-2 text-sm font-medium text-gray-700"
+        >Тип смены</label
+      >
+      <p-select
+        id="shiftTypeSelect"
+        [options]="shiftTypes"
+        [(ngModel)]="selectedShiftType"
+        optionLabel="name"
+        placeholder="Выберите тип смены"
+        (onChange)="onShiftTypeChange($event.value)"
+        (onShow)="clearTemplateSelection()"
+        styleClass="w-full"
+      ></p-select>
+    </div>
+
+    <!-- Список шаблонов смен для выбранного типа -->
+    <div
+      *ngIf="isEditMode"
+      @slideDown
+      class="p-4 mb-4 border border-gray-300 rounded-lg bg-gray-50"
+    >
+      <h3 class="mb-3 text-sm font-semibold text-gray-800">Шаблоны смен</h3>
+
+      <!-- Сообщение, если тип смены не выбран -->
+      <div
+        *ngIf="!selectedShiftType"
+        class="py-4 text-sm text-center text-gray-500"
+      >
+        Выберите тип смены
+      </div>
+
+      <!-- Loader -->
+      <div
+        *ngIf="selectedShiftType && loadingTemplates"
+        class="py-4 text-sm text-center text-gray-500"
+      >
+        <i class="mr-2 pi pi-spin pi-spinner"></i>
+        Загрузка шаблонов...
+      </div>
+
+      <!-- Список шаблонов -->
+      <p-scrollPanel
+        *ngIf="
+          selectedShiftType && !loadingTemplates && shiftTemplates.length > 0
+        "
+        [style]="{ width: '100%', height: '300px' }"
+      >
+        <div class="pr-2 space-y-2">
+          <div
+            *ngFor="let template of shiftTemplates"
+            class="flex items-center gap-3 p-3 text-sm transition-colors border rounded cursor-pointer"
+            [ngClass]="{
+              'border-blue-500 bg-blue-50':
+                selectedTemplate?.id === template.id,
+              'border-gray-200 bg-white hover:bg-gray-50':
+                selectedTemplate?.id !== template.id
+            }"
+            (click)="selectTemplate(template)"
+          >
+            <!-- Левый квадрат с кодом смены -->
+            <div
+              class="flex items-center justify-center flex-shrink-0 w-8 h-8 text-xs font-bold text-white bg-blue-500 rounded"
+              [style.background-color]="
+                getShiftTemplateColor(getCombinedShiftCode(template))
+              "
+            >
+              {{ getCombinedShiftCode(template) }}
+            </div>
+
+            <!-- Правая часть с информацией -->
+            <div class="flex-1 min-w-0">
+              <!-- Описание -->
+              <div class="font-medium text-gray-900 truncate">
+                {{ template.description }}
+              </div>
+
+              <!-- Время и дополнительная информация -->
+              <div class="flex items-center gap-2 mt-1 text-xs text-gray-600">
+                <!-- Время (только если isFixedTime) -->
+                <div
+                  *ngIf="template.isFixedTime"
+                  class="flex items-center gap-1"
+                >
+                  <i class="pi pi-clock"></i>
+                  <span>{{
+                    template.startTime.substring(0, 5) +
+                      " - " +
+                      template.endTime.substring(0, 5)
+                  }}</span>
+                </div>
+
+                <!-- Если не фиксированное время -->
+                <div
+                  *ngIf="!template.isFixedTime"
+                  class="flex items-center gap-1 text-gray-500"
+                >
+                  <i class="pi pi-clock"></i>
+                  <span>Flexible</span>
+                </div>
+
+                <!-- Иконка офиса -->
+                <div
+                  *ngIf="template.isOffice"
+                  class="flex items-center gap-1 text-blue-600"
+                  title="Офисная смена"
+                >
+                  <i class="pi pi-building"></i>
+                </div>
+
+                <!-- Иконка дома (если не офисная смена) -->
+                <div
+                  *ngIf="!template.isOffice"
+                  class="flex items-center gap-1 text-purple-600"
+                  title="Домашняя смена"
+                >
+                  <i class="pi pi-home"></i>
+                </div>
+
+                <!-- Фиксированное время -->
+                <div
+                  *ngIf="template.isFixedTime"
+                  class="flex items-center gap-1 text-green-600"
+                  title="Фиксированное время"
+                >
+                  <i class="pi pi-lock"></i>
+                  <span>Fixed</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </p-scrollPanel>
+
+      <!-- Сообщение, если шаблонов нет -->
+      <div
+        *ngIf="
+          selectedShiftType && !loadingTemplates && shiftTemplates.length === 0
+        "
+        class="py-4 text-sm text-center text-gray-500"
+      >
+        Нет доступных шаблонов для этого типа смены
+      </div>
+    </div>
+
+    <!-- Поля для заполнения времени (для гибких смен) -->
+    <div
+      *ngIf="isEditMode && selectedTemplate && !selectedTemplate.isFixedTime"
+      @slideDown
+      class="p-4 mb-4 border border-orange-300 rounded-lg bg-orange-50"
+    >
+      <h3 class="mb-3 text-sm font-semibold text-orange-800">
+        Настройка времени смены
+      </h3>
+      <p class="mb-3 text-xs text-orange-600">
+        Шаблон "{{ selectedTemplate.description }}" требует указания времени
+      </p>
+
+      <div class="space-y-3">
+        <!-- Время смены -->
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label
+              for="startTime"
+              class="block mb-1 text-xs font-medium text-gray-700"
+              >Начало смены</label
+            >
+            <input
+              type="time"
+              id="startTime"
+              pInputText
+              [(ngModel)]="flexibleStartTime"
+              class="w-full text-sm"
+              placeholder="09:00"
+            />
+          </div>
+          <div>
+            <label
+              for="endTime"
+              class="block mb-1 text-xs font-medium text-gray-700"
+              >Конец смены</label
+            >
+            <input
+              type="time"
+              id="endTime"
+              pInputText
+              [(ngModel)]="flexibleEndTime"
+              class="w-full text-sm"
+              placeholder="18:00"
+            />
+          </div>
+        </div>
+
+        <!-- Время обеда -->
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label
+              for="lunchStartTime"
+              class="block mb-1 text-xs font-medium text-gray-700"
+              >Начало обеда</label
+            >
+            <input
+              type="time"
+              id="lunchStartTime"
+              pInputText
+              [(ngModel)]="flexibleLunchStartTime"
+              class="w-full text-sm"
+              placeholder="12:00"
+            />
+          </div>
+          <div>
+            <label
+              for="lunchEndTime"
+              class="block mb-1 text-xs font-medium text-gray-700"
+              >Конец обеда</label
+            >
+            <input
+              type="time"
+              id="lunchEndTime"
+              pInputText
+              [(ngModel)]="flexibleLunchEndTime"
+              class="w-full text-sm"
+              placeholder="13:00"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Кнопки для работы со сменами -->
+    <div *ngIf="isEditMode" @fadeInOut class="mb-4 space-y-4">
+      <!-- Кнопка Assign -->
+      <p-button
+        label="Assign to Selected Cells"
+        icon="pi pi-plus"
+        (onClick)="assignShiftsToCells()"
+        [disabled]="
+          !selectedShiftType || !selectedTemplate || selectedCells.length === 0
+        "
+        [text]="false"
+        severity="success"
+        styleClass="w-full px-3 py-2 text-sm font-semibold"
+      />
+
+      <!-- Кнопка Clear Selected Shifts -->
+      <p-button
+        label="Clear Selected Shifts"
+        icon="pi pi-times"
+        (onClick)="clearSelectedShifts()"
+        [disabled]="selectedCells.length === 0"
+        [text]="false"
+        severity="contrast"
+        styleClass="w-full px-3 py-2 text-sm font-semibold"
+      />
+
+      <!-- Кнопка Clear User Shifts -->
+      <p-button
+        label="Clear All Shifts for Selected User"
+        icon="pi pi-trash"
+        (onClick)="clearUserShifts()"
+        [disabled]="selectedUsers.length === 0"
+        [text]="false"
+        severity="danger"
+        styleClass="w-full px-3 py-2 text-sm font-semibold"
+      />
+
+      <!-- Кнопка Apply -->
+      <p-button
+        label="Apply Changes ({{
+          pendingShifts.size + shiftsToUpdate.size + shiftsToDelete.size
+        }})"
+        icon="pi pi-check"
+        (onClick)="applyShifts()"
+        [disabled]="
+          (pendingShifts.size === 0 &&
+            shiftsToUpdate.size === 0 &&
+            shiftsToDelete.size === 0) ||
+          savingShifts
+        "
+        [loading]="savingShifts"
+        [text]="false"
+        severity="primary"
+        styleClass="w-full px-3 py-2 text-sm font-semibold"
+      />
+
+      <!-- Кнопка Clear -->
+      <p-button
+        *ngIf="
+          pendingShifts.size > 0 ||
+          shiftsToUpdate.size > 0 ||
+          shiftsToDelete.size > 0
+        "
+        label="Clear All Changes"
+        icon="pi pi-times"
+        (onClick)="clearPendingShifts(); shiftsToDelete.clear()"
+        [text]="true"
+        severity="danger"
+        styleClass="w-full px-3 py-2 text-sm"
+      />
+    </div>
+  </ng-template>
+
+  <app-schedule-table
+    [month]="monthName"
+    [days]="days"
+    [scheduleData]="scheduleData"
+    [loading]="loading"
+    [isEditMode]="isEditMode"
+    [pendingShifts]="pendingShifts"
+    [shiftsToUpdate]="shiftsToUpdate"
+    [shiftsToDelete]="shiftsToDelete"
+  />
+</app-main>

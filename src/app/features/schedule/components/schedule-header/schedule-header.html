@@ -1,0 +1,38 @@
+<div class="flex flex-row">
+  <div
+    class="w-48 px-4 py-2 text-lg font-semibold tracking-wider bg-gray-100 font-semtext-left"
+  >
+    {{ month }}
+  </div>
+  <div class="flex">
+    <div
+      class="flex flex-col justify-center w-10 py-1 text-base font-medium text-center text-gray-800 border-r border-white bg-gray-50"
+      *ngFor="let d of days"
+      [ngClass]="{
+        'bg-gray-100': d.isWeekend,
+        'bg-red-100': d.isHoliday
+      }"
+    >
+      <div
+        class="text-base font-medium"
+        [ngClass]="{
+          'text-gray-400 font-bold': d.isWeekend,
+          'text-red-600 font-bold': d.isHoliday,
+          'text-gray-800': !d.isWeekend && !d.isHoliday
+        }"
+      >
+        {{ d.day }}
+      </div>
+      <div
+        class="text-xs font-light mt-0.5"
+        [ngClass]="{
+          'text-gray-500': d.isWeekend,
+          'text-red-500': d.isHoliday,
+          'text-gray-600': !d.isWeekend && !d.isHoliday
+        }"
+      >
+        {{ d.dayName }}
+      </div>
+    </div>
+  </div>
+</div>

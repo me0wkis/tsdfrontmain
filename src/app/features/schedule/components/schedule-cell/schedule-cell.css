@@ -1,0 +1,16 @@
+.schedule-cell {
+  background-color: #f6f6f6;
+}
+
+/* Выделенная ячейка */
+.schedule-cell.selected-cell {
+  background-color: #8d8d8d !important;
+  color: white !important;
+}
+
+/* Ячейка выбранного пользователя */
+.schedule-cell.selected-user-cell {
+  background-color: #93c5fd !important;
+}
+
+/* Переопределения для специальных состояний останутся через ngClass и inline styles */

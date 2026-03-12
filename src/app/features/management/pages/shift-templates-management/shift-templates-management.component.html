@@ -1,0 +1,333 @@
+<div class="p-6">
+  <div class="mb-6">
+    <h2 class="text-2xl font-bold text-gray-900">Управление шаблонами смен</h2>
+    <p class="mt-2 text-gray-600">
+      Создание, редактирование и удаление шаблонов смен
+    </p>
+  </div>
+
+  <!-- Toolbar -->
+  <p-toolbar class="p-2 mb-4">
+    <div class="p-2 mb-4 p-toolbar-group-start">
+      <button
+        pButton
+        pRipple
+        label="Добавить"
+        icon="pi pi-plus"
+        class="mr-2 p-button-success"
+        (click)="openNew()"
+      ></button>
+      <button
+        pButton
+        pRipple
+        label="Удалить"
+        icon="pi pi-trash"
+        class="p-button-danger"
+        (click)="deleteSelectedShiftTemplates()"
+        [disabled]="!selectedShiftTemplates || !selectedShiftTemplates.length"
+      ></button>
+    </div>
+  </p-toolbar>
+
+  <!-- Data Table -->
+  <p-table
+    #dt
+    [value]="shiftTemplates"
+    [loading]="loading"
+    [paginator]="true"
+    [rows]="10"
+    [showCurrentPageReport]="true"
+    currentPageReportTemplate="Показано {first} - {last} из {totalRecords} записей"
+    [globalFilterFields]="['code', 'description']"
+    responsiveLayout="scroll"
+    [(selection)]="selectedShiftTemplates"
+    dataKey="id"
+    rowGroupMode="subheader"
+    groupRowsBy="shiftType"
+    sortMode="single"
+    [sortField]="'shiftType'"
+  >
+    <ng-template pTemplate="caption">
+      <div class="flex items-center justify-between">
+        <h3 class="text-lg font-semibold">Шаблоны смен</h3>
+        <span class="p-input-icon-left">
+          <i class="pi pi-search"></i>
+          <input
+            pInputText
+            type="text"
+            #searchInput
+            placeholder="Поиск..."
+            (input)="dt.filterGlobal(searchInput.value, 'contains')"
+          />
+        </span>
+      </div>
+    </ng-template>
+
+    <ng-template pTemplate="header">
+      <tr>
+        <th style="width: 3rem">
+          <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
+        </th>
+        <th pSortableColumn="id">ID <p-sortIcon field="id"></p-sortIcon></th>
+        <th pSortableColumn="code">
+          Код <p-sortIcon field="code"></p-sortIcon>
+        </th>
+        <th pSortableColumn="description">
+          Описание <p-sortIcon field="description"></p-sortIcon>
+        </th>
+        <th pSortableColumn="shiftType">
+          Тип смены <p-sortIcon field="shiftType"></p-sortIcon>
+        </th>
+        <th pSortableColumn="isFixedTime">
+          Фиксированное время <p-sortIcon field="isFixedTime"></p-sortIcon>
+        </th>
+        <th pSortableColumn="startTime">
+          Начало <p-sortIcon field="startTime"></p-sortIcon>
+        </th>
+        <th pSortableColumn="endTime">
+          Конец <p-sortIcon field="endTime"></p-sortIcon>
+        </th>
+        <th pSortableColumn="isActive">
+          Активен <p-sortIcon field="isActive"></p-sortIcon>
+        </th>
+        <th>Действия</th>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="groupheader" let-shiftTemplate>
+      <tr class="p-rowgroup-header">
+        <td colspan="10">
+          <div class="flex items-center gap-2 p-2 bg-blue-50">
+            <i class="text-blue-600 pi pi-tag"></i>
+            <span class="font-semibold text-blue-800">
+              {{ getShiftTypeName(shiftTemplate.shiftType) }}
+            </span>
+            <p-badge
+              [value]="getShiftTypeCount(shiftTemplate.shiftType)"
+              styleClass="ml-2"
+            >
+            </p-badge>
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-shiftTemplate>
+      <tr>
+        <td>
+          <p-tableCheckbox [value]="shiftTemplate"></p-tableCheckbox>
+        </td>
+        <td>{{ shiftTemplate.id }}</td>
+        <td>{{ shiftTemplate.code }}</td>
+        <td>{{ shiftTemplate.description }}</td>
+        <td>
+          <p-tag
+            [value]="getShiftTypeName(shiftTemplate.shiftType)"
+            severity="info"
+          >
+          </p-tag>
+        </td>
+        <td>
+          <p-tag
+            [value]="shiftTemplate.isFixedTime ? 'Да' : 'Нет'"
+            [severity]="shiftTemplate.isFixedTime ? 'success' : 'warning'"
+          ></p-tag>
+        </td>
+        <td>{{ shiftTemplate.startTime }}</td>
+        <td>{{ shiftTemplate.endTime }}</td>
+        <td>
+          <p-tag
+            [value]="shiftTemplate.isActive ? 'Активен' : 'Неактивен'"
+            [severity]="shiftTemplate.isActive ? 'success' : 'danger'"
+          ></p-tag>
+        </td>
+        <td>
+          <button
+            pButton
+            pRipple
+            icon="pi pi-pencil"
+            class="mr-2 p-button-rounded p-button-success"
+            (click)="editShiftTemplate(shiftTemplate)"
+          ></button>
+          <button
+            pButton
+            pRipple
+            icon="pi pi-trash"
+            class="p-button-rounded p-button-warning"
+            (click)="deleteShiftTemplate(shiftTemplate)"
+          ></button>
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="summary">
+      <div class="flex align-items-center justify-content-between">
+        Всего шаблонов смен: {{ shiftTemplates ? shiftTemplates.length : 0 }}
+      </div>
+    </ng-template>
+  </p-table>
+
+  <!-- Toast for notifications -->
+  <p-toast></p-toast>
+</div>
+
+<!-- Dialog for creating/editing shift template -->
+<p-dialog
+  [(visible)]="shiftTemplateDialog"
+  [style]="{ width: '750px' }"
+  header="Шаблон смены"
+  [modal]="true"
+  styleClass="p-fluid"
+>
+  <ng-template pTemplate="content">
+    <div class="grid grid-cols-2 gap-4">
+      <div class="field">
+        <label for="code">Alphabetical Code *</label>
+        <input
+          type="text"
+          pInputText
+          id="code"
+          [(ngModel)]="shiftTemplate.code"
+          required
+          autofocus
+        />
+        <small class="p-error" *ngIf="submitted && !shiftTemplate.code"
+          >Код обязателен.</small
+        >
+      </div>
+
+      <div class="field">
+        <label for="shiftType">Тип смены</label>
+        <input
+          type="number"
+          pInputText
+          id="shiftType"
+          [(ngModel)]="shiftTemplate.shiftType"
+        />
+      </div>
+
+      <div class="col-span-2 field">
+        <label for="description">Описание *</label>
+        <input
+          type="text"
+          pInputText
+          id="description"
+          [(ngModel)]="shiftTemplate.description"
+          required
+        />
+        <small class="p-error" *ngIf="submitted && !shiftTemplate.description"
+          >Описание обязательно.</small
+        >
+      </div>
+
+      <div class="field">
+        <label for="startTime">Время начала</label>
+        <input
+          type="time"
+          pInputText
+          id="startTime"
+          [(ngModel)]="shiftTemplate.startTime"
+        />
+      </div>
+
+      <div class="field">
+        <label for="endTime">Время окончания</label>
+        <input
+          type="time"
+          pInputText
+          id="endTime"
+          [(ngModel)]="shiftTemplate.endTime"
+        />
+      </div>
+
+      <div class="field">
+        <label for="lunchStartTime">Начало обеда</label>
+        <input
+          type="time"
+          pInputText
+          id="lunchStartTime"
+          [(ngModel)]="shiftTemplate.lunchStartTime"
+        />
+      </div>
+
+      <div class="field">
+        <label for="lunchEndTime">Конец обеда</label>
+        <input
+          type="time"
+          pInputText
+          id="lunchEndTime"
+          [(ngModel)]="shiftTemplate.lunchEndTime"
+        />
+      </div>
+
+      <div class="field">
+        <label for="icon">Иконка</label>
+        <input
+          type="text"
+          pInputText
+          id="icon"
+          [(ngModel)]="shiftTemplate.icon"
+        />
+      </div>
+
+      <div class="field">
+        <label for="allowedRoles">Разрешенные роли</label>
+        <input
+          type="text"
+          pInputText
+          id="allowedRoles"
+          [(ngModel)]="shiftTemplate.allowedRoles"
+        />
+      </div>
+
+      <div class="field-checkbox">
+        <p-checkbox
+          id="isFixedTime"
+          [(ngModel)]="shiftTemplate.isFixedTime"
+          binary="true"
+        ></p-checkbox>
+        <label for="isFixedTime">Фиксированное время</label>
+      </div>
+
+      <div class="field-checkbox">
+        <p-checkbox
+          id="isActive"
+          [(ngModel)]="shiftTemplate.isActive"
+          binary="true"
+        ></p-checkbox>
+        <label for="isActive">Активен</label>
+      </div>
+
+      <div class="field-checkbox">
+        <p-checkbox
+          id="isOffice"
+          [(ngModel)]="shiftTemplate.isOffice"
+          binary="true"
+        ></p-checkbox>
+        <label for="isOffice">Офисная смена</label>
+      </div>
+    </div>
+  </ng-template>
+
+  <ng-template pTemplate="footer">
+    <button
+      pButton
+      pRipple
+      label="Отмена"
+      icon="pi pi-times"
+      class="p-button-text"
+      (click)="hideDialog()"
+    ></button>
+    <button
+      pButton
+      pRipple
+      label="Сохранить"
+      icon="pi pi-check"
+      class="p-button-text"
+      (click)="saveShiftTemplate()"
+    ></button>
+  </ng-template>
+</p-dialog>
+
+<!-- Confirmation Dialog -->
+<p-confirmDialog [style]="{ width: '450px' }"></p-confirmDialog>
