@@ -1,0 +1,3519 @@
+openapi: 3.0.3
+info:
+  title: TSD Backend API
+  version: 0.0.1
+  description: API documentation for the TSD Backend.
+paths:
+  /api/portal/auth/ldap/:
+    post:
+      operationId: auth_ldap_create
+      description: |-
+        Аутентификация через корпоративный Active Directory (LDAPS).
+
+        Требования:
+        - Пользователь должен быть заведён в таблице `users` (поле `alias`).
+        - Пароль проверяется напрямую в AD (direct user bind).
+
+        При успехе устанавливает cookie `session_token`, который используется всеми остальными эндпоинтами.
+      summary: LDAP login (AD)
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - username
+              - password
+              properties:
+                username:
+                  type: string
+                  example: ivanov
+                password:
+                  type: string
+                  example: secret
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                description: Authenticated — session_token cookie выставлен
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                description: Не указан username или password
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                description: Неверные учётные данные или пользователь не найден в
+                  БД
+          description: ''
+  /api/portal/auth/login/:
+    post:
+      operationId: auth_login_create
+      description: '[LEGACY] JWT авторизация по email. Не используется — текущая авторизация
+        через ADFS (/auth/login).'
+      summary: User login
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - email
+              properties:
+                email:
+                  type: string
+                  example: user@company.com
+                password:
+                  type: string
+                  example: any_value
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      - {}
+      deprecated: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                description: Success
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                description: Bad Request
+          description: ''
+  /api/portal/auth/logout/:
+    post:
+      operationId: auth_logout_create
+      description: '[LEGACY] Инвалидация refresh токена. Не используется — выход через
+        /auth/logout.'
+      summary: JWT Logout
+      tags:
+      - auth
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      deprecated: true
+      responses:
+        '200':
+          description: No response body
+  /api/portal/auth/refresh/:
+    post:
+      operationId: auth_refresh_create
+      description: '[LEGACY] Обновление JWT access токена. Не используется с OIDC
+        авторизацией.'
+      summary: Refresh JWT token
+      tags:
+      - auth
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      - {}
+      deprecated: true
+      responses:
+        '200':
+          description: No response body
+  /api/portal/auth/verify/:
+    post:
+      operationId: auth_verify_create
+      description: |-
+        Takes a token and indicates if it is valid.  This view provides no
+        information about a token's fitness for a particular use.
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenVerifyRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenVerifyRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenVerifyRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/portal/calendar-anomalies/:
+    get:
+      operationId: calendar_anomalies_list
+      parameters:
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: offset
+        required: false
+        in: query
+        description: The initial index from which to return the results.
+        schema:
+          type: integer
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - calendar-anomalies
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCalendarAnomaliesReadList'
+          description: ''
+    post:
+      operationId: calendar_anomalies_create
+      tags:
+      - calendar-anomalies
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CalendarAnomaliesWriteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CalendarAnomaliesWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CalendarAnomaliesWriteRequest'
+        required: true
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalendarAnomaliesWrite'
+          description: ''
+  /api/portal/calendar-anomalies/{id}/:
+    get:
+      operationId: calendar_anomalies_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - calendar-anomalies
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalendarAnomaliesRead'
+          description: ''
+    put:
+      operationId: calendar_anomalies_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - calendar-anomalies
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CalendarAnomaliesWriteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CalendarAnomaliesWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CalendarAnomaliesWriteRequest'
+        required: true
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalendarAnomaliesWrite'
+          description: ''
+    patch:
+      operationId: calendar_anomalies_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - calendar-anomalies
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCalendarAnomaliesWriteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedCalendarAnomaliesWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedCalendarAnomaliesWriteRequest'
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalendarAnomaliesWrite'
+          description: ''
+    delete:
+      operationId: calendar_anomalies_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - calendar-anomalies
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/portal/calendar-anomalies/{year}/{month}/:
+    get:
+      operationId: calendar_anomalies_by_month
+      parameters:
+      - in: path
+        name: month
+        schema:
+          type: integer
+        required: true
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: path
+        name: year
+        schema:
+          type: integer
+        required: true
+      tags:
+      - calendar-anomalies
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CalendarAnomaliesRead'
+          description: ''
+  /api/portal/calendar-anomaly-types/:
+    get:
+      operationId: calendar_anomaly_types_list
+      parameters:
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: offset
+        required: false
+        in: query
+        description: The initial index from which to return the results.
+        schema:
+          type: integer
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - calendar-anomaly-types
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCalendarAnomalyTypesList'
+          description: ''
+    post:
+      operationId: calendar_anomaly_types_create
+      tags:
+      - calendar-anomaly-types
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CalendarAnomalyTypesRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CalendarAnomalyTypesRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CalendarAnomalyTypesRequest'
+        required: true
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalendarAnomalyTypes'
+          description: ''
+  /api/portal/calendar-anomaly-types/{id}/:
+    get:
+      operationId: calendar_anomaly_types_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - calendar-anomaly-types
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalendarAnomalyTypes'
+          description: ''
+    put:
+      operationId: calendar_anomaly_types_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - calendar-anomaly-types
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CalendarAnomalyTypesRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CalendarAnomalyTypesRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CalendarAnomalyTypesRequest'
+        required: true
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalendarAnomalyTypes'
+          description: ''
+    patch:
+      operationId: calendar_anomaly_types_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - calendar-anomaly-types
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCalendarAnomalyTypesRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedCalendarAnomalyTypesRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedCalendarAnomalyTypesRequest'
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalendarAnomalyTypes'
+          description: ''
+    delete:
+      operationId: calendar_anomaly_types_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - calendar-anomaly-types
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/portal/desks/:
+    get:
+      operationId: desks_list
+      description: Создание и просмотр рабочих мест
+      parameters:
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: offset
+        required: false
+        in: query
+        description: The initial index from which to return the results.
+        schema:
+          type: integer
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - desks
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedDesksList'
+          description: ''
+    post:
+      operationId: desks_create
+      description: Создание и просмотр рабочих мест
+      tags:
+      - desks
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DesksRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DesksRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DesksRequest'
+        required: true
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Desks'
+          description: ''
+  /api/portal/desks/{id}/:
+    get:
+      operationId: desks_detail_2
+      description: CRUD для рабочих мест
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - desks
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Desks'
+          description: ''
+    put:
+      operationId: desks_detail_4
+      description: CRUD для рабочих мест
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - desks
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DesksRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DesksRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DesksRequest'
+        required: true
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Desks'
+          description: ''
+    patch:
+      operationId: desks_detail_3
+      description: CRUD для рабочих мест
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - desks
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedDesksRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedDesksRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedDesksRequest'
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Desks'
+          description: ''
+    delete:
+      operationId: desks_detail
+      description: CRUD для рабочих мест
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - desks
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/portal/oidc/authenticate/:
+    get:
+      operationId: oidc_authenticate_retrieve
+      description: |-
+        GET /api/portal/oidc/authenticate/
+        Возвращает JSON { auth_url: "..." } — фронт делает window.location.href = auth_url.
+        Используется если фронт сначала делает fetch, а потом редиректит.
+      tags:
+      - oidc
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/portal/oidc/diagnostic/:
+    get:
+      operationId: oidc_diagnostic_retrieve
+      description: Диагностика OIDC конфигурации (только для DEBUG режима)
+      tags:
+      - oidc
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/portal/schedule/{year}/{month}/:
+    get:
+      operationId: schedule_retrieve
+      parameters:
+      - in: query
+        name: include_all_active
+        schema:
+          type: string
+          enum:
+          - '0'
+          - '1'
+          default: '0'
+        description: Include all active users (1=true, 0=false)
+      - in: path
+        name: month
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: year
+        schema:
+          type: integer
+        required: true
+      tags:
+      - schedule
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/portal/shift-patterns/:
+    get:
+      operationId: shift_patterns_list
+      parameters:
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: offset
+        required: false
+        in: query
+        description: The initial index from which to return the results.
+        schema:
+          type: integer
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - shift-patterns
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedShiftPatternsList'
+          description: ''
+    post:
+      operationId: shift_patterns_create
+      tags:
+      - shift-patterns
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShiftPatternsRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ShiftPatternsRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ShiftPatternsRequest'
+        required: true
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShiftPatterns'
+          description: ''
+  /api/portal/shift-patterns/{id}:
+    get:
+      operationId: shift_patterns_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - shift-patterns
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShiftPatterns'
+          description: ''
+    put:
+      operationId: shift_patterns_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - shift-patterns
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShiftPatternsRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ShiftPatternsRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ShiftPatternsRequest'
+        required: true
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShiftPatterns'
+          description: ''
+    patch:
+      operationId: shift_patterns_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - shift-patterns
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedShiftPatternsRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedShiftPatternsRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedShiftPatternsRequest'
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShiftPatterns'
+          description: ''
+    delete:
+      operationId: shift_patterns_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - shift-patterns
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/portal/shift-templates/:
+    get:
+      operationId: shift_templates_list
+      parameters:
+      - in: query
+        name: code
+        schema:
+          type: string
+      - in: query
+        name: end_time
+        schema:
+          type: string
+          format: time
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - in: query
+        name: is_fixed_time
+        schema:
+          type: boolean
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: offset
+        required: false
+        in: query
+        description: The initial index from which to return the results.
+        schema:
+          type: integer
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: shift_type
+        schema:
+          type: integer
+      - in: query
+        name: start_time
+        schema:
+          type: string
+          format: time
+      tags:
+      - shift-templates
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedShiftTemplatesList'
+          description: ''
+    post:
+      operationId: shift_templates_create
+      tags:
+      - shift-templates
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShiftTemplatesRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ShiftTemplatesRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ShiftTemplatesRequest'
+        required: true
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShiftTemplates'
+          description: ''
+  /api/portal/shift-templates/{id}/:
+    get:
+      operationId: shift_templates_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - shift-templates
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShiftTemplates'
+          description: ''
+    put:
+      operationId: shift_templates_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - shift-templates
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShiftTemplatesRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ShiftTemplatesRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ShiftTemplatesRequest'
+        required: true
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShiftTemplates'
+          description: ''
+    patch:
+      operationId: shift_templates_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - shift-templates
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedShiftTemplatesRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedShiftTemplatesRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedShiftTemplatesRequest'
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShiftTemplates'
+          description: ''
+    delete:
+      operationId: shift_templates_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - shift-templates
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/portal/shift-types/:
+    get:
+      operationId: shift_types_list
+      parameters:
+      - in: query
+        name: is_work_shift
+        schema:
+          type: boolean
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: offset
+        required: false
+        in: query
+        description: The initial index from which to return the results.
+        schema:
+          type: integer
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - shift-types
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedShiftTypesList'
+          description: ''
+    post:
+      operationId: shift_types_create
+      tags:
+      - shift-types
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShiftTypesRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ShiftTypesRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ShiftTypesRequest'
+        required: true
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShiftTypes'
+          description: ''
+  /api/portal/shift-types/{id}/:
+    get:
+      operationId: shift_types_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - shift-types
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShiftTypes'
+          description: ''
+    put:
+      operationId: shift_types_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - shift-types
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShiftTypesRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ShiftTypesRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ShiftTypesRequest'
+        required: true
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShiftTypes'
+          description: ''
+    patch:
+      operationId: shift_types_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - shift-types
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedShiftTypesRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedShiftTypesRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedShiftTypesRequest'
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShiftTypes'
+          description: ''
+    delete:
+      operationId: shift_types_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - shift-types
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/portal/shifts/:
+    get:
+      operationId: shifts_list
+      description: "\n        ## Advanced Filtering System\n\n        Use the `filter`\
+        \ parameter with format: **field-operator-value**\n\n        ### Examples:\n\
+        \        - `filter=user-eq-IIvanov` - User equals IIvanov\n        - `filter=shift_type-eq-1`\
+        \ - Shift type equals 1\n        - `filter=shift_date-gt-2025-01-01` - Shift\
+        \ date after 2025-01-01\n\n        ### Multiple Filters:\n        Add multiple\
+        \ `filter` parameters:\n        `filter=user-eq-IIvanov&filter=shift_type-eq-1`\n\
+        \n        ### Available Operators:\n        | Operator | Description | Example\
+        \ |\n        |----------|-------------|---------|\n        | `eq` | Equals\
+        \ | `user-eq-IIvanov` |\n        | `ne` | Not equals | `shift_type-ne-1` |\n\
+        \        | `gt` | Greater than | `shift_date-gt-2024-01-01` |\n        | `lt`\
+        \ | Less than | `shift_date-lt-2025-01-01` |\n        | `contains` | Contains\
+        \ | `job_title-contains-live` |\n\n        ### Available Fields:\n       \
+        \ - `user`, `shift_date`, `shift_type`\n        - `job_title`, `shift_template`\n\
+        \        - `start_time`, `created_by`\n                "
+      summary: Get list of shifts with advanced filtering
+      parameters:
+      - in: query
+        name: filter
+        schema:
+          type: string
+        description: "\n        Filter parameters in format: field-operator-value\n\
+          \n        **Examples:**\n        - filter=user-eq-IIvanov\n        - filter=shift_type-eq-1\n\
+          \        - filter=shift_date-gt-2025-01-01\n\n        **Multiple filters:**\
+          \ Use multiple filter parameters\n                        "
+        explode: true
+        style: form
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Number of results per page
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: Pagination offset
+      - in: query
+        name: sort
+        schema:
+          type: string
+        description: 'Sort parameters in format: field-order (asc/desc)'
+        explode: true
+        style: form
+      tags:
+      - shifts
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedShiftsReadList'
+          description: ''
+    post:
+      operationId: shifts_create
+      tags:
+      - shifts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShiftsWriteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ShiftsWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ShiftsWriteRequest'
+        required: true
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShiftsWrite'
+          description: ''
+  /api/portal/shifts-exchange/{id}/:
+    get:
+      operationId: shifts_exchange_retrieve
+      description: Получение детальной информации об обмене
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - shifts-exchange
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShiftExchangeList'
+          description: ''
+  /api/portal/shifts-exchange/{id}/approve/:
+    put:
+      operationId: shifts_exchange_approve_update
+      description: Подтверждение или отмена обмена (в зависимости от текущего статуса)
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - shifts-exchange
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShiftExchangeApproveRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ShiftExchangeApproveRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ShiftExchangeApproveRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+    patch:
+      operationId: shifts_exchange_approve_partial_update
+      description: Подтверждение или отмена обмена (в зависимости от текущего статуса)
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - shifts-exchange
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedShiftExchangeApproveRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedShiftExchangeApproveRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedShiftExchangeApproveRequest'
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/portal/shifts-exchange/{id}/cancel/:
+    put:
+      operationId: shifts_exchange_cancel_update
+      description: Отмена подтвержденного обмена
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - shifts-exchange
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShiftExchangeCancelRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ShiftExchangeCancelRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ShiftExchangeCancelRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+    patch:
+      operationId: shifts_exchange_cancel_partial_update
+      description: Отмена подтвержденного обмена
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - shifts-exchange
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedShiftExchangeCancelRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedShiftExchangeCancelRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedShiftExchangeCancelRequest'
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/portal/shifts-exchange/{id}/history/:
+    get:
+      operationId: shifts_exchange_history_retrieve
+      description: Получение истории изменений обмена
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - shifts-exchange
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShiftExchangeList'
+          description: ''
+  /api/portal/shifts-exchange/create/:
+    post:
+      operationId: shifts_exchange_create_create
+      description: Создание запроса на обмен
+      tags:
+      - shifts-exchange
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShiftExchangeCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ShiftExchangeCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ShiftExchangeCreateRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShiftExchangeCreate'
+          description: ''
+  /api/portal/shifts/{id}/:
+    put:
+      operationId: shifts_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - shifts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShiftsWriteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ShiftsWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ShiftsWriteRequest'
+        required: true
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShiftsWrite'
+          description: ''
+    patch:
+      operationId: shifts_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - shifts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedShiftsWriteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedShiftsWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedShiftsWriteRequest'
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShiftsWrite'
+          description: ''
+    delete:
+      operationId: shifts_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - shifts
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+    get:
+      operationId: shifts_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - shifts
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShiftsRead'
+          description: ''
+  /api/portal/sync-employees/:
+    get:
+      operationId: sync_employees_retrieve
+      description: "\n            Переносит данные из исходной таблицы в целевую с\
+        \ подстановкой названий должностей вместо ID.\n\n            **Как это работает:**\n\
+        \            1. Фильтрация записей по указанным категориям\n            2.\
+        \ Проверка существования записи в целевой таблице\n            3. Добавление\
+        \ только новых записей\n            4. Подстановка названия должности вместо\
+        \ ID\n\n            **Примеры использования:**\n            - `/api/sync-employees/?category_ids=1,2,3`\
+        \ - синхронизация категорий 1,2,3\n            - `/api/sync-employees/?category_names=Manager,Developer&dry_run=true`\
+        \ - тестовый прогон\n            - `/api/sync-employees/?source_ids=101,102,103&include_without_category=true`\
+        \ - конкретные ID\n            "
+      summary: Синхронизировать данные сотрудников
+      parameters:
+      - in: query
+        name: batch_size
+        schema:
+          type: integer
+          default: 1000
+        description: Размер пакета для массовой вставки (макс. 10000)
+        examples:
+          Пример:
+            value: '500'
+            description: Вставлять по 500 записей за раз
+      - in: query
+        name: category_ids
+        schema:
+          type: string
+        description: 'ID категорий через запятую (например: 1,2,3)'
+        examples:
+          Пример1:
+            value: 1,2,3
+            summary: Пример 1
+            description: Синхронизация категорий 1, 2 и 3
+          Пример2:
+            value: 5,7,10
+            summary: Пример 2
+            description: Синхронизация категорий 5, 7 и 10
+      - in: query
+        name: category_names
+        schema:
+          type: string
+        description: 'Названия категорий через запятую (например: Manager,Developer)'
+        examples:
+          Пример1:
+            value: Manager,Developer
+            summary: Пример 1
+            description: Синхронизация категорий с названиями Manager и Developer
+      - in: query
+        name: dry_run
+        schema:
+          type: boolean
+          default: false
+        description: Только подсчет без реальной вставки (для проверки)
+        examples:
+          Пример:
+            value: 'true'
+            description: Тестовый прогон без изменений в БД
+      - in: query
+        name: format
+        schema:
+          type: string
+          enum:
+          - csv
+          - json
+          default: json
+        description: Формат ответа (json или csv)
+      - in: query
+        name: include_without_category
+        schema:
+          type: boolean
+          default: false
+        description: Включать пользователей без категории (usercategories_id IS NULL)
+        examples:
+          Пример:
+            value: 'true'
+            description: Включить пользователей без категории
+      - in: query
+        name: source_ids
+        schema:
+          type: string
+        description: ID записей для синхронизации через запятую
+        examples:
+          Пример:
+            value: 101,102,103
+            description: Синхронизация только записей с ID 101, 102 и 103
+      tags:
+      - Analytics sync
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+              examples:
+                УспешныйОтвет:
+                  value:
+                    status: success
+                    message: Sync completed successfully
+                    statistics:
+                      processed: 150
+                      new: 45
+                      skipped: 105
+                      errors: 0
+                    applied_filters:
+                      category_ids:
+                      - 1
+                      - 2
+                      - 3
+                      include_without_category: false
+                  summary: Успешный ответ
+                ТестовыйПрогон:
+                  value:
+                    status: success
+                    message: Dry run completed
+                    statistics:
+                      processed: 150
+                      new: 45
+                      skipped: 105
+                      errors: 0
+                      details:
+                      - id: 101
+                        action: will_create
+                        category_id: 1
+                      - id: 102
+                        action: skipped
+                        reason: already_exists
+                        category_id: 2
+                    applied_filters:
+                      category_ids:
+                      - 1
+                      - 2
+                      - 3
+                  summary: Тестовый прогон
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+        '500':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/portal/teams/:
+    get:
+      operationId: teams_list
+      description: Создание и просмотр команд
+      parameters:
+      - name: limit
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: offset
+        required: false
+        in: query
+        description: The initial index from which to return the results.
+        schema:
+          type: integer
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - teams
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedTeamsList'
+          description: ''
+    post:
+      operationId: teams_create
+      description: Создание и просмотр команд
+      tags:
+      - teams
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TeamsRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TeamsRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TeamsRequest'
+        required: true
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Teams'
+          description: ''
+  /api/portal/teams/{id}/:
+    get:
+      operationId: teams_detail_2
+      description: CRUD для команд
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - teams
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Teams'
+          description: ''
+    put:
+      operationId: teams_detail_4
+      description: CRUD для команд
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - teams
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TeamsRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TeamsRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TeamsRequest'
+        required: true
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Teams'
+          description: ''
+    patch:
+      operationId: teams_detail_3
+      description: CRUD для команд
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - teams
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedTeamsRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedTeamsRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedTeamsRequest'
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Teams'
+          description: ''
+    delete:
+      operationId: teams_detail
+      description: CRUD для команд
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - teams
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/portal/users/:
+    get:
+      operationId: users_list
+      description: "\n    ## Advanced Filtering System\n\n    Use the `filter` parameter\
+        \ with format: **field-operator-value**\n\n    ### Examples:\n    - `filter=first_name-eq-John`\
+        \ - First name equals \"John\"\n    - `filter=is_active-eq-1` - Is active\
+        \ equals 1\n    - `filter=hiring_date-gt-2023-01-01` - Hiring date after 2023-01-01\n\
+        \n    ### Multiple Filters:\n    Add multiple `filter` parameters:\n    `filter=first_name-eq-John&filter=is_active-eq-1&filter=hiring_date-gt-2023-01-01`\n\
+        \n    ### Available Operators:\n    | Operator | Description | Example |\n\
+        \    |----------|-------------|---------|\n    | `eq` | Equals | `first_name-eq-John`\
+        \ |\n    | `ne` | Not equals | `is_active-ne-0` |\n    | `gt` | Greater than\
+        \ | `hiring_date-gt-2023-01-01` |\n    | `lt` | Less than | `hiring_date-lt-2024-01-01`\
+        \ |\n    | `contains` | Contains | `job_title-contains-manager` |\n\n    ###\
+        \ Available Fields:\n    - `first_name`, `second_name`, `alias`, `email`\n\
+        \    - `job_title`, `is_active`, `hiring_date`, `group_name`\n    - `supervisor_name`,\
+        \ `team__name`, `desk__number`\n            "
+      summary: Get list of users with advanced filtering
+      parameters:
+      - in: query
+        name: filter
+        schema:
+          type: string
+        description: "\n    Filter parameters in format: field-operator-value\n\n\
+          \    **Examples:**\n    - first_name-eq-John\n    - is_active-eq-1\n   \
+          \ - hiring_date-gt-2023-01-01\n\n    **Multiple filters:** Use multiple\
+          \ filter parameters\n    \n    **Note:** Use `__` for related fields, not\
+          \ single `_`\n                    "
+        explode: true
+        style: form
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Number of results per page
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: Pagination offset
+      - in: query
+        name: sort
+        schema:
+          type: string
+        description: 'Sort parameters in format: field-order (asc/desc)'
+        explode: true
+        style: form
+      tags:
+      - users
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedUsersReadList'
+              examples:
+                FilterByNameAndActiveStatus:
+                  value:
+                    count: 123
+                    next: http://api.example.org/accounts/?offset=400&limit=100
+                    previous: http://api.example.org/accounts/?offset=200&limit=100
+                    results:
+                    - {}
+                  summary: Filter by name and active status
+                  description: 'Example: ?filter=first_name-eq-John&filter=is_active-eq-1'
+                SortByDateAndPaginate:
+                  value:
+                    count: 123
+                    next: http://api.example.org/accounts/?offset=400&limit=100
+                    previous: http://api.example.org/accounts/?offset=200&limit=100
+                    results:
+                    - {}
+                  summary: Sort by date and paginate
+                  description: 'Example: ?sort=hiring_date-desc&limit=10&offset=20'
+          description: ''
+    post:
+      operationId: users_create
+      tags:
+      - users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UsersWriteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UsersWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UsersWriteRequest'
+        required: true
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsersWrite'
+          description: ''
+  /api/portal/users/{id}/:
+    get:
+      operationId: users_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - users
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsersRead'
+          description: ''
+    post:
+      operationId: users_create_2
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UsersReadRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UsersReadRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UsersReadRequest'
+        required: true
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsersRead'
+          description: ''
+    put:
+      operationId: users_update_2
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UsersWriteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UsersWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UsersWriteRequest'
+        required: true
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsersWrite'
+          description: ''
+    patch:
+      operationId: users_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedUsersWriteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedUsersWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedUsersWriteRequest'
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsersWrite'
+          description: ''
+    delete:
+      operationId: users_delete
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - users
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+components:
+  schemas:
+    CalendarAnomaliesRead:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        date:
+          type: string
+          format: date
+        name:
+          type: string
+          maxLength: 50
+        type:
+          type: string
+      required:
+      - date
+      - id
+      - name
+      - type
+    CalendarAnomaliesWrite:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        date:
+          type: string
+          format: date
+        name:
+          type: string
+          maxLength: 50
+        type:
+          type: integer
+      required:
+      - date
+      - id
+      - name
+      - type
+    CalendarAnomaliesWriteRequest:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+        type:
+          type: integer
+      required:
+      - date
+      - name
+      - type
+    CalendarAnomalyTypes:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 30
+      required:
+      - id
+      - name
+    CalendarAnomalyTypesRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 30
+      required:
+      - name
+    Desks:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        desk_number:
+          type: string
+          maxLength: 20
+      required:
+      - desk_number
+      - id
+    DesksRequest:
+      type: object
+      properties:
+        desk_number:
+          type: string
+          minLength: 1
+          maxLength: 20
+      required:
+      - desk_number
+    PaginatedCalendarAnomaliesReadList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/CalendarAnomaliesRead'
+    PaginatedCalendarAnomalyTypesList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/CalendarAnomalyTypes'
+    PaginatedDesksList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Desks'
+    PaginatedShiftPatternsList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ShiftPatterns'
+    PaginatedShiftTemplatesList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ShiftTemplates'
+    PaginatedShiftTypesList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ShiftTypes'
+    PaginatedShiftsReadList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ShiftsRead'
+    PaginatedTeamsList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Teams'
+    PaginatedUsersReadList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=400&limit=100
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?offset=200&limit=100
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/UsersRead'
+    PatchedCalendarAnomaliesWriteRequest:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+        type:
+          type: integer
+    PatchedCalendarAnomalyTypesRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 30
+    PatchedDesksRequest:
+      type: object
+      properties:
+        desk_number:
+          type: string
+          minLength: 1
+          maxLength: 20
+    PatchedShiftExchangeApproveRequest:
+      type: object
+      properties:
+        manager_alias:
+          type: string
+          writeOnly: true
+          minLength: 1
+    PatchedShiftExchangeCancelRequest:
+      type: object
+      properties:
+        manager_alias:
+          type: string
+          writeOnly: true
+          minLength: 1
+    PatchedShiftPatternsRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        description:
+          type: string
+        rules: {}
+    PatchedShiftTemplatesRequest:
+      type: object
+      properties:
+        code:
+          type: string
+          maxLength: 20
+        description:
+          type: string
+          minLength: 1
+          maxLength: 100
+        is_fixed_time:
+          type: boolean
+        start_time:
+          type: string
+          format: time
+          nullable: true
+        end_time:
+          type: string
+          format: time
+          nullable: true
+        lunch_start_time:
+          type: string
+          format: time
+          nullable: true
+        lunch_end_time:
+          type: string
+          format: time
+          nullable: true
+        shift_type:
+          type: integer
+        icon:
+          type: string
+          maxLength: 50
+        allowed_roles:
+          type: string
+          maxLength: 100
+        is_active:
+          type: boolean
+        is_office:
+          type: boolean
+    PatchedShiftTypesRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+        code:
+          type: string
+          minLength: 1
+          maxLength: 1
+        is_work_shift:
+          type: boolean
+    PatchedShiftsWriteRequest:
+      type: object
+      properties:
+        user:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+        shift_date:
+          type: string
+          format: date
+        job_title:
+          type: string
+          minLength: 1
+          maxLength: 50
+        shift_type:
+          type: integer
+        start_time:
+          type: string
+          format: time
+          nullable: true
+        end_time:
+          type: string
+          format: time
+          nullable: true
+        lunch_start_time:
+          type: string
+          format: time
+          nullable: true
+        lunch_end_time:
+          type: string
+          format: time
+          nullable: true
+        shift_template:
+          type: integer
+        created_by:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+    PatchedTeamsRequest:
+      type: object
+      properties:
+        team_name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        team_color:
+          type: string
+          minLength: 1
+          maxLength: 7
+    PatchedUsersWriteRequest:
+      type: object
+      properties:
+        id:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+        alias:
+          type: string
+          minLength: 1
+          maxLength: 100
+        first_name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        second_name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        job_title:
+          type: string
+          minLength: 1
+          maxLength: 100
+        group_name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        hiring_date:
+          type: string
+          format: date
+        supervisor_name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        email:
+          type: string
+          minLength: 1
+          maxLength: 100
+        phone_number:
+          type: string
+          minLength: 1
+          maxLength: 20
+        desk:
+          type: integer
+        team:
+          type: integer
+        avatar_url:
+          type: string
+          minLength: 1
+          maxLength: 255
+        cc_abonent_id:
+          type: string
+          minLength: 1
+          maxLength: 10
+        is_active:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+    Shift:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        shift_date:
+          type: string
+          format: date
+        job_title:
+          type: string
+          maxLength: 50
+        short_code:
+          type: string
+          readOnly: true
+        start_time:
+          type: string
+          format: time
+          nullable: true
+        end_time:
+          type: string
+          format: time
+          nullable: true
+        lunch_start_time:
+          type: string
+          format: time
+          nullable: true
+        lunch_end_time:
+          type: string
+          format: time
+          nullable: true
+        work_hours:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,2})?$
+        color:
+          type: string
+          readOnly: true
+      required:
+      - color
+      - id
+      - job_title
+      - shift_date
+      - short_code
+      - work_hours
+    ShiftExchangeApproveRequest:
+      type: object
+      properties:
+        manager_alias:
+          type: string
+          writeOnly: true
+          minLength: 1
+      required:
+      - manager_alias
+    ShiftExchangeCancelRequest:
+      type: object
+      properties:
+        manager_alias:
+          type: string
+          writeOnly: true
+          minLength: 1
+      required:
+      - manager_alias
+    ShiftExchangeCreate:
+      type: object
+      properties:
+        shift_from:
+          type: integer
+        shift_to:
+          type: integer
+      required:
+      - shift_from
+      - shift_to
+    ShiftExchangeCreateRequest:
+      type: object
+      properties:
+        shift_from:
+          type: integer
+        shift_to:
+          type: integer
+        user_alias:
+          type: string
+          writeOnly: true
+          minLength: 1
+      required:
+      - shift_from
+      - shift_to
+      - user_alias
+    ShiftExchangeList:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        shift_from:
+          allOf:
+          - $ref: '#/components/schemas/Shift'
+          readOnly: true
+        shift_to:
+          allOf:
+          - $ref: '#/components/schemas/Shift'
+          readOnly: true
+        is_approved:
+          type: boolean
+        created_by:
+          type: string
+          maxLength: 255
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        approved_by:
+          type: string
+          nullable: true
+          maxLength: 255
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        history:
+          type: string
+          readOnly: true
+      required:
+      - created_at
+      - created_by
+      - history
+      - id
+      - shift_from
+      - shift_to
+      - updated_at
+    ShiftPatterns:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+        rules: {}
+      required:
+      - id
+      - name
+    ShiftPatternsRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        description:
+          type: string
+        rules: {}
+      required:
+      - name
+    ShiftTemplates:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        code:
+          type: string
+          maxLength: 20
+        description:
+          type: string
+          maxLength: 100
+        is_fixed_time:
+          type: boolean
+        start_time:
+          type: string
+          format: time
+          nullable: true
+        end_time:
+          type: string
+          format: time
+          nullable: true
+        lunch_start_time:
+          type: string
+          format: time
+          nullable: true
+        lunch_end_time:
+          type: string
+          format: time
+          nullable: true
+        shift_type:
+          type: integer
+        icon:
+          type: string
+          maxLength: 50
+        allowed_roles:
+          type: string
+          maxLength: 100
+        is_active:
+          type: boolean
+        is_office:
+          type: boolean
+      required:
+      - description
+      - id
+      - is_active
+      - is_office
+      - shift_type
+    ShiftTemplatesRequest:
+      type: object
+      properties:
+        code:
+          type: string
+          maxLength: 20
+        description:
+          type: string
+          minLength: 1
+          maxLength: 100
+        is_fixed_time:
+          type: boolean
+        start_time:
+          type: string
+          format: time
+          nullable: true
+        end_time:
+          type: string
+          format: time
+          nullable: true
+        lunch_start_time:
+          type: string
+          format: time
+          nullable: true
+        lunch_end_time:
+          type: string
+          format: time
+          nullable: true
+        shift_type:
+          type: integer
+        icon:
+          type: string
+          maxLength: 50
+        allowed_roles:
+          type: string
+          maxLength: 100
+        is_active:
+          type: boolean
+        is_office:
+          type: boolean
+      required:
+      - description
+      - is_active
+      - is_office
+      - shift_type
+    ShiftTypes:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 50
+        code:
+          type: string
+          maxLength: 1
+        is_work_shift:
+          type: boolean
+      required:
+      - code
+      - id
+      - is_work_shift
+      - name
+    ShiftTypesRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+        code:
+          type: string
+          minLength: 1
+          maxLength: 1
+        is_work_shift:
+          type: boolean
+      required:
+      - code
+      - is_work_shift
+      - name
+    ShiftsRead:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        user:
+          type: string
+        shift_date:
+          type: string
+          format: date
+        job_title:
+          type: string
+          maxLength: 50
+        shift_type:
+          type: string
+        start_time:
+          type: string
+          format: time
+          readOnly: true
+        end_time:
+          type: string
+          format: time
+          readOnly: true
+        lunch_start_time:
+          type: string
+          format: time
+          readOnly: true
+        lunch_end_time:
+          type: string
+          format: time
+          readOnly: true
+        work_hours:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,2})?$
+          readOnly: true
+        shift_template:
+          type: string
+        created_by:
+          type: string
+        is_fixed_time:
+          type: boolean
+          readOnly: true
+      required:
+      - created_by
+      - end_time
+      - id
+      - is_fixed_time
+      - job_title
+      - lunch_end_time
+      - lunch_start_time
+      - shift_date
+      - shift_template
+      - shift_type
+      - start_time
+      - user
+      - work_hours
+    ShiftsWrite:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        user:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+        shift_date:
+          type: string
+          format: date
+        job_title:
+          type: string
+          maxLength: 50
+        shift_type:
+          type: integer
+        start_time:
+          type: string
+          format: time
+          nullable: true
+        end_time:
+          type: string
+          format: time
+          nullable: true
+        lunch_start_time:
+          type: string
+          format: time
+          nullable: true
+        lunch_end_time:
+          type: string
+          format: time
+          nullable: true
+        work_hours:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,2})?$
+          readOnly: true
+        shift_template:
+          type: integer
+        created_by:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+      required:
+      - created_by
+      - id
+      - job_title
+      - shift_date
+      - shift_template
+      - user
+      - work_hours
+    ShiftsWriteRequest:
+      type: object
+      properties:
+        user:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+        shift_date:
+          type: string
+          format: date
+        job_title:
+          type: string
+          minLength: 1
+          maxLength: 50
+        shift_type:
+          type: integer
+        start_time:
+          type: string
+          format: time
+          nullable: true
+        end_time:
+          type: string
+          format: time
+          nullable: true
+        lunch_start_time:
+          type: string
+          format: time
+          nullable: true
+        lunch_end_time:
+          type: string
+          format: time
+          nullable: true
+        shift_template:
+          type: integer
+        created_by:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+      required:
+      - created_by
+      - job_title
+      - shift_date
+      - shift_template
+      - user
+    Teams:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        team_name:
+          type: string
+          maxLength: 100
+        team_color:
+          type: string
+          maxLength: 7
+      required:
+      - id
+      - team_color
+      - team_name
+    TeamsRequest:
+      type: object
+      properties:
+        team_name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        team_color:
+          type: string
+          minLength: 1
+          maxLength: 7
+      required:
+      - team_color
+      - team_name
+    TokenVerifyRequest:
+      type: object
+      properties:
+        token:
+          type: string
+          writeOnly: true
+          minLength: 1
+      required:
+      - token
+    UsersRead:
+      type: object
+      properties:
+        id:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+        alias:
+          type: string
+          maxLength: 100
+        first_name:
+          type: string
+          maxLength: 100
+        second_name:
+          type: string
+          maxLength: 100
+        job_title:
+          type: string
+          maxLength: 100
+        group_name:
+          type: string
+          maxLength: 100
+        hiring_date:
+          type: string
+          format: date
+        supervisor_name:
+          type: string
+          maxLength: 100
+        email:
+          type: string
+          maxLength: 100
+        phone_number:
+          type: string
+          maxLength: 20
+        desk:
+          type: string
+        team:
+          type: string
+        avatar_url:
+          type: string
+          maxLength: 255
+        cc_abonent_id:
+          type: string
+          maxLength: 10
+        is_active:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+      required:
+      - alias
+      - avatar_url
+      - cc_abonent_id
+      - desk
+      - email
+      - first_name
+      - group_name
+      - hiring_date
+      - id
+      - is_active
+      - job_title
+      - phone_number
+      - second_name
+      - supervisor_name
+      - team
+    UsersReadRequest:
+      type: object
+      properties:
+        id:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+        alias:
+          type: string
+          minLength: 1
+          maxLength: 100
+        first_name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        second_name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        job_title:
+          type: string
+          minLength: 1
+          maxLength: 100
+        group_name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        hiring_date:
+          type: string
+          format: date
+        supervisor_name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        email:
+          type: string
+          minLength: 1
+          maxLength: 100
+        phone_number:
+          type: string
+          minLength: 1
+          maxLength: 20
+        desk:
+          type: string
+          minLength: 1
+        team:
+          type: string
+          minLength: 1
+        avatar_url:
+          type: string
+          minLength: 1
+          maxLength: 255
+        cc_abonent_id:
+          type: string
+          minLength: 1
+          maxLength: 10
+        is_active:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+      required:
+      - alias
+      - avatar_url
+      - cc_abonent_id
+      - desk
+      - email
+      - first_name
+      - group_name
+      - hiring_date
+      - id
+      - is_active
+      - job_title
+      - phone_number
+      - second_name
+      - supervisor_name
+      - team
+    UsersWrite:
+      type: object
+      properties:
+        id:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+        alias:
+          type: string
+          maxLength: 100
+        first_name:
+          type: string
+          maxLength: 100
+        second_name:
+          type: string
+          maxLength: 100
+        job_title:
+          type: string
+          maxLength: 100
+        group_name:
+          type: string
+          maxLength: 100
+        hiring_date:
+          type: string
+          format: date
+        supervisor_name:
+          type: string
+          maxLength: 100
+        email:
+          type: string
+          maxLength: 100
+        phone_number:
+          type: string
+          maxLength: 20
+        desk:
+          type: integer
+        team:
+          type: integer
+        avatar_url:
+          type: string
+          maxLength: 255
+        cc_abonent_id:
+          type: string
+          maxLength: 10
+        is_active:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+      required:
+      - alias
+      - avatar_url
+      - cc_abonent_id
+      - desk
+      - email
+      - first_name
+      - group_name
+      - hiring_date
+      - id
+      - is_active
+      - job_title
+      - phone_number
+      - second_name
+      - supervisor_name
+      - team
+    UsersWriteRequest:
+      type: object
+      properties:
+        id:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+        alias:
+          type: string
+          minLength: 1
+          maxLength: 100
+        first_name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        second_name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        job_title:
+          type: string
+          minLength: 1
+          maxLength: 100
+        group_name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        hiring_date:
+          type: string
+          format: date
+        supervisor_name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        email:
+          type: string
+          minLength: 1
+          maxLength: 100
+        phone_number:
+          type: string
+          minLength: 1
+          maxLength: 20
+        desk:
+          type: integer
+        team:
+          type: integer
+        avatar_url:
+          type: string
+          minLength: 1
+          maxLength: 255
+        cc_abonent_id:
+          type: string
+          minLength: 1
+          maxLength: 10
+        is_active:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+      required:
+      - alias
+      - avatar_url
+      - cc_abonent_id
+      - desk
+      - email
+      - first_name
+      - group_name
+      - hiring_date
+      - id
+      - is_active
+      - job_title
+      - phone_number
+      - second_name
+      - supervisor_name
+      - team
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+tags:
+- name: auth
+  description: 'Аутентификация: проверка сессии (/auth/me/)'
+- name: shifts
+  description: Shifts endpoints
+- name: shift-templates
+  description: Shift templates endpoints
+- name: users
+  description: Users endpoints
+- name: shift-types
+  description: Shift types endpoints
+- name: calendar-anomalies
+  description: Calendar anomalies endpoints
+- name: calendar-anomaly-types
+  description: Anomaly types endpoints
+- name: desks
+  description: Desks endpoints
+- name: teams
+  description: Teams endpoints
+- name: shift-patterns
+  description: Shift patterns endpoints
+- name: schedule
+  description: Monthly schedule endpoints
