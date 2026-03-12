@@ -1,0 +1,86 @@
+<div class="flex h-screen transition-all">
+  <div
+    class="overflow-y-auto text-white transition-all duration-200 bg-white border-r border-gray-200"
+    [ngClass]="{ 'w-0 p-5': sidebarHidden, 'w-90 p-5': !sidebarHidden }"
+  >
+    <ng-container *ngTemplateOutlet="sidebarTemplate"></ng-container>
+  </div>
+  <div class="flex flex-col flex-grow transition-all duration-200">
+    <div class="flex items-center p-2 bg-white border-b border-gray-200">
+      <!-- Left: Sidebar toggle button -->
+      <div class="flex items-center">
+        <p-button
+          icon="pi pi-bars"
+          (onClick)="toggleSidebar()"
+          [text]="true"
+          size="large"
+          styleClass="mr-4"
+          aria-label="Toggle Sidebar"
+        />
+      </div>
+
+      <!-- Center: Menu bar (expandable flex) -->
+      <div class="flex justify-center flex-1">
+        <div class="flex gap-2">
+          <p-button
+            label="Schedule"
+            (onClick)="navigateTo('/schedule')"
+            [text]="!isActiveRoute('/schedule')"
+            [severity]="isActiveRoute('/schedule') ? 'primary' : undefined"
+            styleClass="px-4 py-2"
+          />
+          <!-- <p-button
+            label="Operation Tool"
+            (onClick)="navigateTo('/op-tool')"
+            [text]="!isActiveRoute('/op-tool')"
+            [severity]="isActiveRoute('/op-tool') ? 'primary' : undefined"
+            styleClass="px-4 py-2"
+          /> -->
+          <p-button
+            label="TSD Calendar"
+            (onClick)="navigateTo('/calendar')"
+            [text]="!isActiveRoute('/calendar')"
+            [severity]="isActiveRoute('/calendar') ? 'primary' : undefined"
+            styleClass="px-4 py-2"
+          />
+          <!-- <p-button
+            label="IT Office Map"
+            (onClick)="navigateTo('/it-office-map')"
+            [text]="!isActiveRoute('/it-office-map')"
+            [severity]="isActiveRoute('/it-office-map') ? 'primary' : undefined"
+            styleClass="px-4 py-2"
+          /> -->
+          <p-button
+            label="Management"
+            (onClick)="navigateTo('/management')"
+            [text]="!isActiveRoute('/management')"
+            [severity]="isActiveRoute('/management') ? 'primary' : undefined"
+            styleClass="px-4 py-2"
+          />
+        </div>
+      </div>
+
+      <!-- Right: User info -->
+      <div class="flex items-center gap-3 pr-3">
+        <span class="text-sm font-medium text-gray-700">{{
+          userFullName
+        }}</span>
+        <div
+          class="flex items-center justify-center text-white transition-colors bg-blue-500 rounded-full cursor-pointer h-7 w-7 hover:bg-blue-600"
+          (click)="toggleUserMenu($event)"
+          title="User menu"
+        >
+          <span class="text-sm font-bold">{{ userInitials }}</span>
+        </div>
+        <p-menu #userMenu [model]="userMenuItems" [popup]="true" />
+      </div>
+    </div>
+    <div class="flex-grow p-5 bg-gray-50">
+      <div class="h-full p-4 bg-white rounded">
+        <ng-content>
+          <router-outlet></router-outlet>
+        </ng-content>
+      </div>
+    </div>
+  </div>
+</div>
