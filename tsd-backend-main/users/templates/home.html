@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Главная страница</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .btn { display: inline-block; padding: 10px 20px; background: #007bff; color: white; text-decoration: none; border-radius: 4px; margin: 5px; }
+        .btn:hover { background: #0056b3; }
+        .info { background: #f8f9fa; padding: 20px; border-radius: 4px; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Добро пожаловать!</h1>
+
+        <div class="info">
+            <h3>Статус: {% if user.is_authenticated %}Авторизован{% else %}Не авторизован{% endif %}</h3>
+            {% if user.is_authenticated %}
+                <p>Вы вошли как: {{ user.username }} ({{ user.email }})</p>
+                <a href="{% url 'oidc_logout' %}" class="btn">Выйти</a>
+            {% else %}
+                <p>Для доступа к защищенным ресурсам требуется авторизация</p>
+                <a href="{% url 'oidc_authentication_init' %}" class="btn">Войти через OIDC</a>
+            {% endif %}
+        </div>
+
+        <h3>Ссылки:</h3>
+        <a href="/api/swagger/" class="btn">Swagger документация</a>
+        <a href="/admin/" class="btn">Админка Django</a>
+        <a href="/api/test/" class="btn">Тестовый API</a>
+
+        {% if user.is_authenticated %}
+            <a href="/api/user-info/" class="btn">Информация о пользователе</a>
+            <a href="/api/protected/" class="btn">Защищенный endpoint</a>
+        {% endif %}
+    </div>
+</body>
+</html>

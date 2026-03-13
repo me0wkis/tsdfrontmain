@@ -1,0 +1,18 @@
+{% if user %}
+<div class="alert alert-warning">
+    <h5>Confirm deletion</h5>
+    <p>Do you want to delete user #{{ user.id }}?</p>
+    
+    <form hx-post="{% url 'delete-user' user.id %}" 
+          hx-target="#deleteResult">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Yes</button>
+        <button type="button" class="btn btn-secondary" 
+                onclick="document.getElementById('deleteResult').innerHTML = ''">
+            No
+        </button>
+    </form>
+    
+    <div id="deleteResult" class="mt-2"></div>
+</div>
+{% endif %}

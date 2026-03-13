@@ -1,0 +1,7 @@
+<form hx-post="{% if user_id %}{% url 'edit-user' user_id %}{% else %}{% url 'edit-user' %}{% endif %}"
+      hx-target="#editResult">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-success">Save</button>
+    <div id="editResult" class="mt-2"></div>
+</form>

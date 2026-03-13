@@ -1,0 +1,22 @@
+{% if users %}
+{% for user in users %}
+<div class="user-card">
+    <h5>User #{{ user.id }}</h5>
+    <p><strong>Job title:</strong> {{ user.job_title }}</p>
+    <p><strong>Team:</strong> {{ user.user_team_id}}</p>
+    <p><strong>Hiring date:</strong> {{ user.hiring_date }}</p>
+    <p><strong>Workplace:</strong> {{ user.user_desk_id }}</p>
+    <p><strong>Phone number:</strong> {{ user.phone_number }}</p>
+    <p><strong>Photo:</strong> <a href="{{ user.avatar_url }}" target="_blank">{{ user.avatar_url }}</a></p>
+    <p><strong>Alias:</strong> {{ user.alias }}</p>
+    <p><strong>Name:</strong> {{ user.first_name}}</p>
+    <p><strong>Surname:</strong> {{ user.second_name }}</p>
+    <p><strong>Email:</strong> {{ user.email }}</p>
+    <p><strong>Group:</strong> {{ user.group_name}}</p>
+    <p><strong>Supervisor:</strong> {{ user.supervisor_name }}</p>
+    <p><strong>Active:</strong> {{ user.is_active }}</p>
+</div>
+{% endfor %}
+{% else %}
+  <div class="alert alert-info">User not found</div>
+{% endif %}

@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="action-section">
+            <h2>Users</h2>
+                <button hx-get="{% url 'get-users' %}"
+                        hx-target="#usersList"
+                        hx-swap="outerHTML"
+                        class="btn btn-primary mb-3">
+                    {% if users %}
+                        Hide users
+                    {% else %}
+                        Show all users
+                    {% endif %}
+                </button>
+            <br>
+                <form hx-get="{% url 'get-users' %}" hx-target="#userDetail" class="mb-3">
+                    <div class="input-group">
+                        <input type="text"
+                               name="user_id"
+                               class="form-control"
+                               placeholder="Input ID"
+                               required>
+                        <button type="submit" class="btn btn-primary">Find user</button>
+                    </div>
+                </form>
+                <div id="userDetail"></div>
+                <div id="usersList">
+                    {% if users %}
+                        {% include 'partials/users_list.html' %}
+                    {% endif %}
+                </div>
+        </div>
+
+        <div class="action-section">
+            <h2>Edit users</h2>
+            <form hx-get="{% url 'edit-user' %}"
+                  hx-target="#editFormContainer"
+                  class="mb-3">
+                <div class="input-group">
+                    <input type="text"
+                           name="user_id"
+                           class="form-control"
+                           placeholder="Input ID (leave empty to create new user)">
+                    <button type="submit" class="btn btn-warning">Update</button>
+                </div>
+            </form>
+            <div id="editFormContainer"></div>
+            <div id="editResult"></div>
+        </div>
+
+        <div class="action-section">
+            <h2>Delete user</h2>
+            <form hx-get="{% url 'delete-user' %}"
+                  hx-target="#deleteContainer"
+                  class="mb-3">
+                <div class="input-group">
+                    <input type="text"
+                           name="user_id"
+                           class="form-control"
+                           placeholder="Input ID"
+                           required>
+                    <button type="submit" class="btn btn-danger">Delete user</button>
+                </div>
+            </form>
+            <div id="deleteContainer"></div>
+            <div id="deleteResult"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
